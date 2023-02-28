@@ -12,6 +12,8 @@ public class Page {
     @Column(nullable = false)
     private int id;
 
+    @ManyToOne(targetEntity = Site.class)
+    @JoinColumn(name = "id")
     @Column(name = "site_id", nullable = false)
     private int siteId;
 
