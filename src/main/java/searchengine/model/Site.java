@@ -10,27 +10,22 @@ public class Site {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @NotNull
+    @Column(nullable = false)
     private int id;
 
     @Enumerated
-    @NotNull
-    @Column(columnDefinition = "ENUM")
+    @Column(columnDefinition = "ENUM", nullable = false)
     private StatusEnum status;
 
-    @NotNull
-    @Column(name = "status_time", columnDefinition = "DATETIME")
+    @Column(name = "status_time", columnDefinition = "DATETIME", nullable = false)
     private String statusTime;
 
-    @NotNull
-    @Column(name = "last_error", columnDefinition = "TEXT")
+    @Column(name = "last_error", columnDefinition = "TEXT", nullable = false)
     private String lastError;
 
-    @Column(columnDefinition = "VARCHAR(255)")
-    @NotNull
+    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
     private String url;
 
-    @Column(columnDefinition = "VARCHAR(255)")
-    @NotNull
+    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
     private String name;
 }

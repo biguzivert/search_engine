@@ -1,30 +1,26 @@
 package searchengine.model;
 
-import com.sun.istack.NotNull;
 
 import javax.persistence.*;
 
 @Entity
-@Table(name = "page")
+@Table(name = "page", indexes = @Index(columnList = "path"))
 public class Page {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @NotNull
+    @Column(nullable = false)
     private int id;
 
-    @Column(name = "site_id")
-    @NotNull
+    @Column(name = "site_id", nullable = false)
     private int siteId;
 
-    @Column(columnDefinition = "TEXT")
-    @NotNull
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String path;
 
-    @NotNull
+    @Column(nullable = false)
     private int code;
 
-    @Column(columnDefinition = "MEDIUMTEXT")
-    @NotNull
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 }
