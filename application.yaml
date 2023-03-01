@@ -13,6 +13,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
+      generate-ddl: true
     show-sql: true
 
 # example values

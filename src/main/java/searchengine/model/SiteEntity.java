@@ -1,12 +1,16 @@
 package searchengine.model;
 
-import com.sun.istack.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+import searchengine.model.enums.StatusEnum;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "site")
-public class Site {
+@Getter
+@Setter
+public class SiteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
