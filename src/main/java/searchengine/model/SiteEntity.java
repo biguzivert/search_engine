@@ -2,9 +2,12 @@ package searchengine.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.domain.Page;
 import searchengine.model.enums.StatusEnum;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "site")
@@ -32,4 +35,7 @@ public class SiteEntity {
 
     @Column(columnDefinition = "VARCHAR(255)", nullable = false)
     private String name;
+
+    @OneToMany(mappedBy = "site", fetch = FetchType.EAGER)
+    private Set<PageEntity> pages = new HashSet<>();
 }

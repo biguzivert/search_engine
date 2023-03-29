@@ -3,6 +3,9 @@ package searchengine.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import searchengine.config.Site;
 
 import javax.persistence.*;
 
@@ -17,10 +20,13 @@ public class PageEntity {
     @Column(nullable = false)
     private int id;
 
-    @ManyToOne(targetEntity = SiteEntity.class)
-    @JoinColumn(name = "id")
-    @Column(name = "site_id", nullable = false)
+    @Column(name = "site_id", insertable = false, updatable = false)
     private int siteId;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "site_id", nullable = false, foreignKey = @ForeignKey(name = "FK_page_site"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private SiteEntity site;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String path;
