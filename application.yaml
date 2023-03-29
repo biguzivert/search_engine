@@ -25,3 +25,11 @@ indexing-settings:
       name: Skillbox
     - url: https://www.playback.ru
       name: PlayBack.Ru
+
+logging:
+  charset:
+    console: UTF-8
+  file:
+    path: logs
+  level:
+    ru.example.group.main: debug
