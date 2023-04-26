@@ -33,3 +33,4 @@ logging:
     path: logs
   level:
     ru.example.group.main: debug
+

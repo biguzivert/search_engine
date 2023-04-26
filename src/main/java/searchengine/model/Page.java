@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import searchengine.config.Site;
 
 import javax.persistence.*;
 
@@ -13,7 +12,7 @@ import javax.persistence.*;
 @Table(name = "page", indexes = @Index(columnList = "path"))
 @Getter
 @Setter
-public class PageEntity {
+public class Page {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -26,7 +25,7 @@ public class PageEntity {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "site_id", nullable = false, foreignKey = @ForeignKey(name = "FK_page_site"))
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private SiteEntity site;
+    private Site site;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String path;
