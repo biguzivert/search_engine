@@ -6,9 +6,13 @@ import searchengine.model.Page;
 import searchengine.model.Site;
 
 @Repository
-public interface SitesRepository extends CrudRepository<Long, Site> {
+public interface SitesRepository extends CrudRepository<Site, Long> {
 
     Site findSiteByUrl(String url);
+
+    void deleteById(int id);
+
+    void delete(Site site);
 
 
 }
