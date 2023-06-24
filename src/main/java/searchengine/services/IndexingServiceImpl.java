@@ -38,25 +38,7 @@ public class IndexingServiceImpl implements IndexingService{
         }
 
         return null;
-    };
-
-/*
-    @Override
-    public IndexingResponse startIndexing() {
-
-        List<Site> sites = sitesList.getSites();
-        for(Site site : sites){
-            pool.invoke(site);
-        }
-
-        new ForkJoinPool().invoke(new IndexingMultithread(sites));
-
-
-
-
-        return null;
     }
-*/
 
     @Override
     public IndexingResponse stopIndexing() {

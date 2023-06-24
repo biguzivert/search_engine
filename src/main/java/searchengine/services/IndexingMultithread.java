@@ -1,5 +1,7 @@
 package searchengine.services;
 
+import org.apache.catalina.connector.Response;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,94 +16,63 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RecursiveTask;
 
-public class IndexingMultithread extends RecursiveTask<Site> {
+public class IndexingMultithread extends RecursiveTask<List<Page>> {
     private Site site;
     private Page page;
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
+    Connection.Response response;
 
     private String link;
 
     private String statusTime;
+
+    private int statusCode;
 
     public IndexingMultithread(Site site, String link) {
         this.site = site;
         this.link = link;
     }
 
- /*   private IndexingMultithread(Site site, Page page){
-        this.site = site;
-        this.page = page;
-    }*/
-
     @Override
-    protected Site compute() {
-        List<Site> subsites = new ArrayList<>();
+    protected List<Page> compute() {
+        List<Page> subsites = new ArrayList<>();
         List<IndexingMultithread> tasks = new ArrayList<>();
+
         try {
-            Document document = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
-            Elements links = document.select("a");
-            if (!links.isEmpty()) {
-                links.forEach(l -> {
-                    Page page = new Page();
-                    String path = l.attr("abs:href");
-                    Element allPageCode = l.select("html").first();
-                    String content = allPageCode.outerHtml();
-                    statusTime = LocalDateTime.now().toString();
+                 response = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
+                 statusCode = response.statusCode();
 
-                    //получить код для Code Page
+                Document document = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
+                Elements links = document.select("a");
+                if (!links.isEmpty()) {
+                    links.forEach(l -> {
+                        Page page = new Page();
+                        String path = l.attr("abs:href");
+                        Element allPageCode = l.select("html").first();
+                        String content = allPageCode.outerHtml();
+                        statusTime = LocalDateTime.now().toString();
 
-                    page.setPath(path);
-                    page.setSiteId(site.getId());
-                    page.setContent(content);
-                    site.setStatusTime(statusTime);
+                        page.setCode(statusCode);
+                        page.setPath(path);
+                        page.setSiteId(site.getId());
+                        page.setContent(content);
+                        site.setStatusTime(statusTime);
 
-                    IndexingMultithread task = new IndexingMultithread(site, path);
-                    task.fork();
-                    tasks.add(task);
+                        IndexingMultithread task = new IndexingMultithread(site, path);
+                        task.fork();
+                        tasks.add(task);
 
 
-                });
-            }
-            for (IndexingMultithread task : tasks) {
-                subsites.add(task.join());
-            }
-        } catch (Exception exception) {
+                    });
+                }
+                for (IndexingMultithread task : tasks) {
+                    subsites.addAll(task.join());
+                }
+            } catch(Exception exception){
             exception.printStackTrace();
         }
-
-    //должен возвращать pages, соотвественно надо изменить тип данных метода
-        return null;
+        return subsites;
     }
 }
-
-
-    /*
-    @Override
-    protected Site compute() {
-
-        List<IndexingMultithread> taskList = new ArrayList<>();
-        sites.forEach(s -> {
-            taskList.add(new IndexingMultithread(s));
-            searchengine.model.Site site = sitesRepository.findSiteByUrl(s.getUrl());
-            sitesRepository.deleteById(site.getId());
-            pageRepository.deleteSiteBySiteId(site.getId());
-
-            searchengine.model.Site newSite = new searchengine.model.Site();
-            newSite.setName(s.getName());
-            newSite.setUrl(s.getUrl());
-            newSite.setStatus(StatusEnum.INDEXING);
-
-            try {
-                Document document = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
-                        .get();
-
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-        });
-*/
-
 
