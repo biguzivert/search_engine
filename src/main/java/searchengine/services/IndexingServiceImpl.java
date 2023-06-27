@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.statistics.IndexingResponse;
-import searchengine.model.Page;
 import searchengine.model.enums.StatusEnum;
 import searchengine.services.repositories.PageRepository;
 import searchengine.services.repositories.SitesRepository;
@@ -27,7 +26,7 @@ public class IndexingServiceImpl implements IndexingService{
         for(Site site : sites){
             searchengine.model.Site siteToDelete = sitesRepository.findSiteByUrl(site.getUrl());
             sitesRepository.delete(siteToDelete);
-            pageRepository.deleteSite(siteToDelete);
+            pageRepository.deleteSiteById(siteToDelete.getId());
             searchengine.model.Site newSite = new searchengine.model.Site();
             newSite.setName(site.getName());
             newSite.setStatus(StatusEnum.INDEXING);
@@ -42,6 +41,7 @@ public class IndexingServiceImpl implements IndexingService{
 
     @Override
     public IndexingResponse stopIndexing() {
+        //тут написать Interrupter
         return null;
     }
 }
