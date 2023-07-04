@@ -1,4 +1,4 @@
-package searchengine.services;
+package searchengine.services.indexing;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -58,7 +58,6 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                         }
                         Element allPageCode = l.select("html").first();
                         String content = allPageCode.outerHtml();
-                        //statusTime = LocalDateTime.now().toString();
 
                         page.setCode(statusCode);
                         page.setPath(cutPath);

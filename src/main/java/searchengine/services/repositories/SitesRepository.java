@@ -10,9 +10,5 @@ public interface SitesRepository extends CrudRepository<Site, Long> {
 
     Site findSiteByUrl(String url);
 
-    void deleteById(int id);
-
-    void delete(Site site);
-
 
 }

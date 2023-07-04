@@ -9,7 +9,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "page", indexes = @Index(columnList = "path"))
+@Table(name = "page", indexes = {@Index(columnList = "path", name = "path_index")})
 @Getter
 @Setter
 public class Page {
@@ -27,7 +27,7 @@ public class Page {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Site site;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "VARCHAR(255)", nullable = false)
     private String path;
 
     @Column(nullable = false)
