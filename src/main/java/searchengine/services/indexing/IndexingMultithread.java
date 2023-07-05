@@ -64,6 +64,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                         page.setSiteId(site.getId());
                         page.setContent(content);
                         site.setStatusTime(statusTime);
+                        site.setStatus(StatusEnum.INDEXING);
 
                         IndexingMultithread task = new IndexingMultithread(site, path);
                         task.fork();

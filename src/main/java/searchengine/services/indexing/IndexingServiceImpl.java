@@ -3,7 +3,7 @@ package searchengine.services.indexing;
 import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
-import searchengine.dto.statistics.IndexingResponse;
+import searchengine.dto.indexing.IndexingResponse;
 import searchengine.model.enums.StatusEnum;
 import searchengine.services.repositories.PageRepository;
 import searchengine.services.repositories.SitesRepository;
@@ -14,7 +14,11 @@ import java.util.concurrent.ForkJoinPool;
 @Service
 public class IndexingServiceImpl implements IndexingService{
 
+    private final String IS_INDEXING = "Индексация уже запущена";
+    private final String NOT_INDEXING = "Индексация не запущена";
+    private final String INDEXING_STOPPED = "Индексация остановлена пользователем";
     private final SitesList sitesList = new SitesList();
+    private final List<Site> sites = sitesList.getSites();
 
     private IndexingMultithread indexingMultithread;
     private ForkJoinPool pool;
@@ -22,26 +26,41 @@ public class IndexingServiceImpl implements IndexingService{
     private PageRepository pageRepository;
 
     public IndexingResponse startIndexing(){
-        List<Site> sites = sitesList.getSites();
-        for(Site site : sites){
-            searchengine.model.Site siteToDelete = sitesRepository.findSiteByUrl(site.getUrl());
-            sitesRepository.delete(siteToDelete);
-            pageRepository.deleteSiteById(siteToDelete.getId());
-            searchengine.model.Site newSite = new searchengine.model.Site();
-            newSite.setName(site.getName());
-            newSite.setStatus(StatusEnum.INDEXING);
-            newSite.setUrl(site.getUrl());
-            sitesRepository.save(newSite);
-            String link = newSite.getUrl();
-            pool.invoke(new IndexingMultithread(newSite, link));
+        IndexingResponse indexingResponse = new IndexingResponse();
+        if(pool.hasQueuedSubmissions()){
+            indexingResponse.setError(IS_INDEXING);
+            indexingResponse.setResult(false);
+        } else
+        {
+//            List<Site> sites = sitesList.getSites();
+            for(Site site : sites){
+                searchengine.model.Site siteToDelete = sitesRepository.findSiteByUrl(site.getUrl());
+                sitesRepository.delete(siteToDelete);
+                pageRepository.deleteSiteById(siteToDelete.getId());
+                searchengine.model.Site newSite = new searchengine.model.Site();
+                newSite.setName(site.getName());
+                newSite.setStatus(StatusEnum.INDEXING);
+                newSite.setUrl(site.getUrl());
+                sitesRepository.save(newSite);
+                String link = newSite.getUrl();
+                pool.invoke(new IndexingMultithread(newSite, link));
+            }
+            indexingResponse.setResult(true);
         }
-
-        return null;
+        return indexingResponse;
     }
 
     @Override
     public IndexingResponse stopIndexing() {
-        //тут написать Interrupter
-        return null;
+        IndexingResponse indexingResponse = new IndexingResponse();
+        if(pool.isQuiescent()){
+            indexingResponse.setError(NOT_INDEXING);
+            indexingResponse.setResult(false);
+        } else {
+            pool.shutdown();
+            sitesRepository.updateStatusAndError(StatusEnum.INDEXING, StatusEnum.FAILED, INDEXING_STOPPED);
+
+        }
+        return indexingResponse;
     }
 }
