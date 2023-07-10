@@ -1,12 +1,14 @@
 package searchengine.model;
 
 
+import com.sun.istack.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
+import javax.persistence.Index;
 
 @Entity
 @Table(name = "page", indexes = {@Index(columnList = "path", name = "path_index", unique = true)})
@@ -16,7 +18,7 @@ public class Page {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false)
+    @NotNull
     private int id;
 
     @Column(name = "site_id", insertable = false, updatable = false)

@@ -1,5 +1,6 @@
 package searchengine.model;
 
+import com.sun.istack.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import searchengine.model.enums.StatusEnum;
@@ -16,7 +17,7 @@ public class Site {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false)
+    @NotNull
     private int id;
 
     @Enumerated

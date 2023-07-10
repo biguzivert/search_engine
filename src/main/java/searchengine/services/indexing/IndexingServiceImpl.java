@@ -21,7 +21,7 @@ public class IndexingServiceImpl implements IndexingService{
     private final List<Site> sites = sitesList.getSites();
 
     private IndexingMultithread indexingMultithread;
-    private ForkJoinPool pool;
+    private ForkJoinPool pool = new ForkJoinPool();
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
 
