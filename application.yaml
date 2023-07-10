@@ -19,12 +19,10 @@ spring:
 
 indexing-settings:
   sites:
-    - url: https://www.lenta.ru
-      name: Лента.ру
-    - url: https://www.skillbox.ru
-      name: Skillbox
-    - url: https://www.playback.ru
-      name: PlayBack.Ru
+    - url: http://www.playback.ru/
+      name: Плейбек.ру
+    - url: https://dombulgakova.ru/
+      name: Дом Булгакова
 
 logging:
   charset:

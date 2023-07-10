@@ -13,6 +13,6 @@ public interface SitesRepository extends CrudRepository<Site, Long> {
 
     Site findSiteByUrl(String url);
 
-    @Query("update site s set s.status = :newStatus, s.last_error = :error where s.status = :oldStatus")
+    @Query("update Site s set s.status = :newStatus, s.lastError = :error where s.status = :oldStatus")
     void updateStatusAndError(@Param("oldStatus")StatusEnum oldStatus, @Param("newStatus")StatusEnum newStatus, @Param("error") String error);
 }

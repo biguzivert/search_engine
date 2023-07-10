@@ -59,7 +59,7 @@ public class IndexingServiceImpl implements IndexingService{
         } else {
             pool.shutdown();
             sitesRepository.updateStatusAndError(StatusEnum.INDEXING, StatusEnum.FAILED, INDEXING_STOPPED);
-
+            indexingResponse.setResult(true);
         }
         return indexingResponse;
     }
