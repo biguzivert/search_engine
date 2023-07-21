@@ -20,8 +20,9 @@ public class Site {
     @NotNull
     private int id;
 
-    @Enumerated
-    @Column(columnDefinition = "ENUM('INDEXING', 'INDEXED', 'FAILED')", nullable = false)
+    @Enumerated(EnumType.STRING)
+  //  @Column(columnDefinition = "ENUM('INDEXING', 'INDEXED', 'FAILED')", nullable = false)
+    @Column(nullable = false)
     private StatusEnum status;
 
     @Column(name = "status_time", columnDefinition = "DATETIME", nullable = false)

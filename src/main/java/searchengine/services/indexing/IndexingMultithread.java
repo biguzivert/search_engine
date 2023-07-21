@@ -5,6 +5,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
@@ -18,7 +19,8 @@ import java.util.concurrent.RecursiveTask;
 
 public class IndexingMultithread extends RecursiveTask<List<Page>> {
     private Site site;
-    private Page page;
+//    private Page page;
+    //по идее репозиторий возвращает Optional - уточнить
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
     Connection.Response response;
@@ -70,6 +72,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                         page.setPath(cutPath);
                         page.setSiteId(site.getId());
                         page.setContent(content);
+                        pageRepository.save(page);
                         site.setStatusTime(statusTime);
                         site.setStatus(StatusEnum.INDEXING);
 
@@ -86,12 +89,14 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
             } catch(Exception exception){
             site.setStatusTime(statusTime);
             statusCode = response.statusCode();
-            page.setCode(statusCode);
+            //page.setCode(statusCode);
             site.setStatus(StatusEnum.FAILED);
             lastError = exception.getMessage();
+            sitesRepository.save(site);
         }
         site.setStatusTime(statusTime);
         site.setStatus(StatusEnum.INDEXED);
+        sitesRepository.save(site);
         return subsites;
     }
 

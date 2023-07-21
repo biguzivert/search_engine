@@ -1,5 +1,6 @@
 package searchengine.services.indexing;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
@@ -35,7 +36,7 @@ public class IndexingServiceImpl implements IndexingService{
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
-        if(pool.hasQueuedSubmissions()){
+        if(pool.getActiveThreadCount() != 0){
             indexingResponse.setError(IS_INDEXING);
             indexingResponse.setResult(false);
         } else
@@ -65,7 +66,7 @@ public class IndexingServiceImpl implements IndexingService{
     @Override
     public IndexingResponse stopIndexing() {
         IndexingResponse indexingResponse = new IndexingResponse();
-        if(pool.isQuiescent()){
+        if(pool.getActiveThreadCount() == 0){
             indexingResponse.setError(NOT_INDEXING);
             indexingResponse.setResult(false);
         } else {
