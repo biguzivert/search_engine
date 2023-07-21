@@ -30,9 +30,16 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
     private int statusCode;
     private String lastError;
 
-    public IndexingMultithread(Site site, String link) {
+    public IndexingMultithread(Site site, String link){
         this.site = site;
         this.link = link;
+    }
+
+    public IndexingMultithread(Site site, String link, SitesRepository sitesRepository, PageRepository pageRepository) {
+        this.site = site;
+        this.link = link;
+        this.sitesRepository = sitesRepository;
+        this.pageRepository = pageRepository;
     }
 
     @Override

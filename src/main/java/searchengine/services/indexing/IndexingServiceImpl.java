@@ -8,6 +8,7 @@ import searchengine.model.enums.StatusEnum;
 import searchengine.services.repositories.PageRepository;
 import searchengine.services.repositories.SitesRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
@@ -17,13 +18,20 @@ public class IndexingServiceImpl implements IndexingService{
     private final String IS_INDEXING = "Индексация уже запущена";
     private final String NOT_INDEXING = "Индексация не запущена";
     private final String INDEXING_STOPPED = "Индексация остановлена пользователем";
-    private final SitesList sitesList = new SitesList();
-    private final List<Site> sites = sitesList.getSites();
+    private final SitesList sitesList;
 
     private IndexingMultithread indexingMultithread;
     private ForkJoinPool pool = new ForkJoinPool();
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
+
+    private String statusTime = LocalDateTime.now().toString();
+
+    public IndexingServiceImpl(SitesList sitesList, SitesRepository sitesRepository, PageRepository pageRepository){
+        this.sitesList = sitesList;
+        this.sitesRepository = sitesRepository;
+        this.pageRepository = pageRepository;
+    }
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
@@ -32,15 +40,19 @@ public class IndexingServiceImpl implements IndexingService{
             indexingResponse.setResult(false);
         } else
         {
-//            List<Site> sites = sitesList.getSites();
+            List<Site> sites = sitesList.getSites();
             for(Site site : sites){
                 searchengine.model.Site siteToDelete = sitesRepository.findSiteByUrl(site.getUrl());
-                sitesRepository.delete(siteToDelete);
-                pageRepository.deleteSiteById(siteToDelete.getId());
+                if(siteToDelete != null){
+                    sitesRepository.delete(siteToDelete);
+                    pageRepository.deleteSiteById(siteToDelete.getId());
+                }
                 searchengine.model.Site newSite = new searchengine.model.Site();
                 newSite.setName(site.getName());
                 newSite.setStatus(StatusEnum.INDEXING);
                 newSite.setUrl(site.getUrl());
+                newSite.setStatusTime(statusTime);
+                newSite.setLastError("");
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 pool.invoke(new IndexingMultithread(newSite, link));
