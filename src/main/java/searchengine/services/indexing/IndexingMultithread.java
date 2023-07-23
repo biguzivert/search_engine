@@ -32,17 +32,17 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
     private int statusCode;
     private String lastError;
 
-    public IndexingMultithread(Site site, String link){
-        this.site = site;
-        this.link = link;
-    }
-
     public IndexingMultithread(Site site, String link, SitesRepository sitesRepository, PageRepository pageRepository) {
         this.site = site;
         this.link = link;
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
     }
+
+/*    public IndexingMultithread(Site site, String link){
+        this.site = site;
+        this.link = link;
+    }*/
 
     @Override
     protected List<Page> compute() {
@@ -60,23 +60,24 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                     links.forEach(l -> {
                         Page page = new Page();
                         String path = l.attr("abs:href");
-                        String cutPath = cutPath(path);
+                        String cutPathString = cutPath(path);
                         //спросить можно ли return
-                        if(isFollowed(cutPath) == true){
+                        if(isFollowed(cutPathString) == true){
                             return;
                         }
                         Element allPageCode = l.select("html").first();
                         String content = allPageCode.outerHtml();
 
                         page.setCode(statusCode);
-                        page.setPath(cutPath);
+                        page.setPath(cutPathString);
                         page.setSiteId(site.getId());
                         page.setContent(content);
                         pageRepository.save(page);
                         site.setStatusTime(statusTime);
                         site.setStatus(StatusEnum.INDEXING);
+                        sitesRepository.save(site);
 
-                        IndexingMultithread task = new IndexingMultithread(site, path);
+                        IndexingMultithread task = new IndexingMultithread(site, path, sitesRepository, pageRepository);
                         task.fork();
                         tasks.add(task);
 

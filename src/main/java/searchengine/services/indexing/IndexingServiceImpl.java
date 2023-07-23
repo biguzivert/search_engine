@@ -56,7 +56,7 @@ public class IndexingServiceImpl implements IndexingService{
                 newSite.setLastError("");
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
-                pool.invoke(new IndexingMultithread(newSite, link));
+                pool.invoke(new IndexingMultithread(newSite, link, sitesRepository, pageRepository));
             }
             indexingResponse.setResult(true);
         }

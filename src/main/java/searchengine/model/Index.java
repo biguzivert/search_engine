@@ -14,7 +14,7 @@ public class Index {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @NotNull
+    @Column(nullable = false)
     private int id;
 
     @Column(name = "page_id", nullable = false)

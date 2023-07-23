@@ -18,7 +18,7 @@ public class Page {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @NotNull
+    @Column(nullable = false)
     private int id;
 
     @Column(name = "site_id", insertable = false, updatable = false)
