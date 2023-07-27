@@ -5,13 +5,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
 import searchengine.services.repositories.PageRepository;
 import searchengine.services.repositories.SitesRepository;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +45,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
     }*/
 
     @Override
-    protected List<Page> compute() {
+    protected List<Page> compute(){
         List<Page> subsites = new ArrayList<>();
         List<IndexingMultithread> tasks = new ArrayList<>();
 
@@ -60,18 +60,25 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                     links.forEach(l -> {
                         Page page = new Page();
                         String path = l.attr("abs:href");
-                        String cutPathString = cutPath(path);
-                        //спросить можно ли return
-                        if(isFollowed(cutPathString) == true){
+                        if(!ifMatchesLinkForm(path) || ifEqualsSiteUrl(path)){
                             return;
                         }
-                        Element allPageCode = l.select("html").first();
-                        String content = allPageCode.outerHtml();
-
+                        String cutPathString = cutPath(path);
+                        if(isFollowed(cutPathString)){
+                            return;
+                        }
+                        try {
+                            Document doc = Jsoup.connect(path).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
+                            Element allPageCode = doc.select("html").first();
+                            String content = allPageCode.outerHtml();
+                            page.setContent(content);
+                        } catch (IOException ex){
+                            ex.printStackTrace();
+                        }
                         page.setCode(statusCode);
                         page.setPath(cutPathString);
+                        page.setSite(site);
                         page.setSiteId(site.getId());
-                        page.setContent(content);
                         pageRepository.save(page);
                         site.setStatusTime(statusTime);
                         site.setStatus(StatusEnum.INDEXING);
@@ -89,30 +96,41 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                 }
             } catch(Exception exception){
             site.setStatusTime(statusTime);
-            statusCode = response.statusCode();
-            //page.setCode(statusCode);
             site.setStatus(StatusEnum.FAILED);
             lastError = exception.getMessage();
             sitesRepository.save(site);
         }
         site.setStatusTime(statusTime);
-        site.setStatus(StatusEnum.INDEXED);
+        if(site.getStatus() == StatusEnum.INDEXING){
+            site.setStatus(StatusEnum.INDEXED);
+        }
         sitesRepository.save(site);
         return subsites;
     }
 
     private boolean isFollowed(String path){
-        boolean ifFollowed = false;
-        if(pageRepository.findPageByPath(path) != null){
-            ifFollowed = true;
-        }
+        boolean ifFollowed = pageRepository.findPageByPath(path) != null;
         return ifFollowed;
     }
 
     private String cutPath(String path) {
-        int deleteTo = path.lastIndexOf(link);
-        String cutPath = path.substring(deleteTo, path.length());
-        return cutPath;
+        String cutPath = path.substring(link.length(), path.length());
+        return "/" + cutPath;
+    }
+
+    private boolean ifMatchesLinkForm(String path){
+        boolean matchesLinkForm = false;
+        String regex = "http://";
+        String secondRegex = "https://";
+        if (path.contains(regex) || path.contains(secondRegex)) {
+            matchesLinkForm = true;
+        }
+        return matchesLinkForm;
+    }
+
+    private boolean ifEqualsSiteUrl(String path){
+        boolean equalsSiteUrl = path.equals(link);
+        return equalsSiteUrl;
     }
 }
 

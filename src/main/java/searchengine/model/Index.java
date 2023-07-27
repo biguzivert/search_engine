@@ -7,7 +7,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table (name = "index")
+@Table (name = "`index`")
 @Getter
 @Setter
 public class Index {
@@ -23,6 +23,6 @@ public class Index {
     @Column(name = "lemma_id", nullable = false)
     private int lemmaId;
 
-    @NotNull
+    @Column(name = "`rank`", nullable = false)
     private float rank;
 }
