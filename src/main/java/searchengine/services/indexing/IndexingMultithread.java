@@ -98,6 +98,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
             site.setStatusTime(statusTime);
             site.setStatus(StatusEnum.FAILED);
             lastError = exception.getMessage();
+            site.setLastError(lastError);
             sitesRepository.save(site);
         }
         site.setStatusTime(statusTime);
