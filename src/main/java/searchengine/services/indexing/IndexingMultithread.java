@@ -15,9 +15,10 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
-public class IndexingMultithread extends RecursiveTask<List<Page>> {
+public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private Site site;
 //    private Page page;
     //по идее репозиторий возвращает Optional - уточнить
@@ -32,6 +33,8 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
     private int statusCode;
     private String lastError;
 
+    private ForkJoinPool pool;
+
     public IndexingMultithread(Site site, String link, SitesRepository sitesRepository, PageRepository pageRepository) {
         this.site = site;
         this.link = link;
@@ -39,10 +42,9 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
         this.pageRepository = pageRepository;
     }
 
-/*    public IndexingMultithread(Site site, String link){
-        this.site = site;
-        this.link = link;
-    }*/
+   public IndexingMultithread(ForkJoinPool pool){
+        this.pool = pool;
+    }
 
     @Override
     protected List<Page> compute(){
@@ -50,7 +52,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
         List<IndexingMultithread> tasks = new ArrayList<>();
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep((long)(500 + Math.random() * 4500));
                  response = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
                  statusCode = response.statusCode();
 
@@ -95,6 +97,8 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
                     subsites.addAll(task.join());
                 }
             } catch(Exception exception){
+
+            //ПЕРЕДЕЛАТЬ, ВСТАВЛЯТЬ В last_error ошибку только если индексирование сайта ПРЕРВАНО
             site.setStatusTime(statusTime);
             site.setStatus(StatusEnum.FAILED);
             lastError = exception.getMessage();
@@ -132,6 +136,15 @@ public class IndexingMultithread extends RecursiveTask<List<Page>> {
     private boolean ifEqualsSiteUrl(String path){
         boolean equalsSiteUrl = path.equals(link);
         return equalsSiteUrl;
+    }
+
+    //Доработать - по окончании индексирования установить корректный статус и вернуть респонс чтобы кнопка поменялась
+    public static void isIndexed(ForkJoinPool pool, Site site){
+        new Thread(() -> {
+            if(pool.getActiveThreadCount() == 0){
+                site.setStatus(StatusEnum.INDEXED);
+            }
+            });
     }
 }
 
