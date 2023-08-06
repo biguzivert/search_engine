@@ -41,10 +41,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
     }
-
-   public IndexingMultithread(ForkJoinPool pool){
-        this.pool = pool;
-    }
+    //надо создать класс с конструктором при вызове которого в indexingserviceiml запускается отдельный поток с проверкой именно этого
 
     @Override
     protected List<Page> compute(){
@@ -106,7 +103,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
             sitesRepository.save(site);
         }
         site.setStatusTime(statusTime);
-        if(site.getStatus() == StatusEnum.INDEXING){
+        if(site.getStatus() == StatusEnum.INDEXING && !pool.isShutdown()){
             site.setStatus(StatusEnum.INDEXED);
         }
         sitesRepository.save(site);
@@ -138,13 +135,5 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         return equalsSiteUrl;
     }
 
-    //Доработать - по окончании индексирования установить корректный статус и вернуть респонс чтобы кнопка поменялась
-    public static void isIndexed(ForkJoinPool pool, Site site){
-        new Thread(() -> {
-            if(pool.getActiveThreadCount() == 0){
-                site.setStatus(StatusEnum.INDEXED);
-            }
-            });
-    }
 }
 
