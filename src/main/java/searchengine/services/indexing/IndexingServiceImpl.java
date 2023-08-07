@@ -75,6 +75,7 @@ public class IndexingServiceImpl implements IndexingService{
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 pool.execute(new IndexingMultithread(newSite, link, sitesRepository, pageRepository));
+       //         new IndexingCheck(pool, newSite, sitesRepository).start();
             }
             indexingResponse.setResult(true);
         }
@@ -90,8 +91,6 @@ public class IndexingServiceImpl implements IndexingService{
             indexingResponse.setResult(false);
         } else {
             pool.shutdownNow();
-            //sitesRepository.updateStatusAndError(StatusEnum.INDEXING, StatusEnum.FAILED, INDEXING_STOPPED);
-            //ifIndexingStopped();
             new Thread(() -> {
                 try {
                     for (;;) {
