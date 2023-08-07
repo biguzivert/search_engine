@@ -119,8 +119,8 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     }
 
     private String cutPath(String path) {
-        String cutPath = path.substring(link.length(), path.length());
-        return "/" + cutPath;
+        String cutPath = path.substring(link.length() - 1, path.length());
+        return cutPath;
     }
 
     private boolean ifMatchesLinkForm(String path){

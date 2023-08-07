@@ -111,4 +111,42 @@ public class IndexingServiceImpl implements IndexingService{
         }
         return indexingResponse;
     }
+    public IndexingResponse indexOnePage(String url){
+        IndexingResponse indexingResponse = new IndexingResponse();
+        if(pool.isTerminating()){
+            indexingResponse.setError(INDEXING_TERMINATING);
+            indexingResponse.setResult(false);
+            return indexingResponse;
+        }
+        if(pool.isShutdown() && pool.isTerminated()){
+            this.pool = new ForkJoinPool();
+        }
+        if(pool.getActiveThreadCount() != 0){
+            indexingResponse.setError(IS_INDEXING);
+            indexingResponse.setResult(false);
+            return indexingResponse;
+        } else
+        {
+                List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(url);
+                if(sitesToDelete != null){
+/*                        List<Integer> siteIds = new ArrayList<>();
+                        for(searchengine.model.Site s : sitesToDelete){
+                            siteIds.add(s.getId());
+                        }*/
+                    sitesRepository.deleteAllSitesByUrl(url);
+//                        siteIds.forEach(s -> pageRepository.deleteSiteById(s));
+                }
+                searchengine.model.Site newSite = new searchengine.model.Site();
+                newSite.setName("ИМЯ");
+                newSite.setStatus(StatusEnum.INDEXING);
+                newSite.setUrl(url);
+                newSite.setStatusTime(statusTime);
+                newSite.setLastError("");
+                sitesRepository.save(newSite);
+                String link = newSite.getUrl();
+                pool.execute(new IndexingMultithread(newSite, link, sitesRepository, pageRepository));
+            indexingResponse.setResult(true);
+        }
+        return indexingResponse;
+    }
 }
