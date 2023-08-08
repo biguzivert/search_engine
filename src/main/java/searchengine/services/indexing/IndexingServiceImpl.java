@@ -13,6 +13,7 @@ import javax.persistence.NonUniqueResultException;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
@@ -38,6 +39,7 @@ public class IndexingServiceImpl implements IndexingService{
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
+        ArrayList<IndexingMultithread> tasks = new ArrayList<>();
         if(pool.isTerminating()){
             indexingResponse.setError(INDEXING_TERMINATING);
             indexingResponse.setResult(false);
@@ -53,8 +55,6 @@ public class IndexingServiceImpl implements IndexingService{
             return indexingResponse;
         } else
         {
-
-
             List<Site> sites = sitesList.getSites();
             for(Site site : sites){
                     List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(site.getUrl());
@@ -74,11 +74,15 @@ public class IndexingServiceImpl implements IndexingService{
                 newSite.setLastError("");
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
-                pool.execute(new IndexingMultithread(newSite, link, sitesRepository, pageRepository));
+                IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, link, sitesRepository, pageRepository);
+                tasks.add(indexingMultithread);
+                pool.execute(indexingMultithread);
        //         new IndexingCheck(pool, newSite, sitesRepository).start();
             }
+            //
             indexingResponse.setResult(true);
         }
+        tasks.forEach(t -> pool.execute(new IndexingCheck(t, t.getSite(), sitesRepository)));
         return indexingResponse;
     }
 
@@ -99,7 +103,6 @@ public class IndexingServiceImpl implements IndexingService{
                             break;
                         } else {
                             Thread.sleep(1000);
-                            continue;
                         }
                     }
                 } catch (InterruptedException ex){

@@ -86,8 +86,6 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                         IndexingMultithread task = new IndexingMultithread(site, path, sitesRepository, pageRepository);
                         task.fork();
                         tasks.add(task);
-
-
                     });
                 }
                 for (IndexingMultithread task : tasks) {
@@ -133,6 +131,10 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private boolean ifEqualsSiteUrl(String path){
         boolean equalsSiteUrl = path.equals(link);
         return equalsSiteUrl;
+    }
+
+    public Site getSite(){
+        return site;
     }
 
 }
