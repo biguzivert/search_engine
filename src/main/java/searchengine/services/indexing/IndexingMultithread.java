@@ -94,11 +94,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
             } catch(Exception exception){
 
             //ПЕРЕДЕЛАТЬ, ВСТАВЛЯТЬ В last_error ошибку только если индексирование сайта ПРЕРВАНО
-            site.setStatusTime(statusTime);
-            site.setStatus(StatusEnum.FAILED);
-            lastError = exception.getMessage();
-            site.setLastError(lastError);
-            sitesRepository.save(site);
+            exception.printStackTrace();
         }
         site.setStatusTime(statusTime);
         if(site.getStatus() == StatusEnum.INDEXING && !pool.isShutdown()){

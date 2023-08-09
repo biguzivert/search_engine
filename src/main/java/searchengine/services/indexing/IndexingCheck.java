@@ -8,10 +8,9 @@ import searchengine.services.repositories.SitesRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
-public class IndexingCheck extends Thread {
+public class IndexingCheck implements Callable<Boolean> {
 
     private Site site;
     private SitesRepository sitesRepository;
@@ -31,18 +30,24 @@ public class IndexingCheck extends Thread {
         this.task = task;
         this.site = site;
         this.sitesRepository = sitesRepository;
-        run();
     }
 
 
     @Override
-    public void run() {
+    public Boolean call() {
+        boolean isIndexed = false;
         try {
             for (; ; ) {
                 if (task.isCompletedNormally()) {
+                    isIndexed = true;
                     site.setStatus(StatusEnum.INDEXED);
                     site.setStatusTime(time.toString());
                     break;
+                } else if (task.isCompletedAbnormally()) {
+                    isIndexed = false;
+                    site.setStatus(StatusEnum.FAILED);
+                    site.setStatusTime(time.toString());
+                    site.setLastError("Индексирование прекращено");
                 } else {
                     Thread.sleep(1000);
                 }
@@ -50,24 +55,8 @@ public class IndexingCheck extends Thread {
         } catch (InterruptedException ex){
             ex.printStackTrace();
         }
+        return isIndexed;
      }
 }
-/*    @Override
-    public void run() {
-        try {
-            for (; ; ) {
-                if (!pool.isShutdown() && pool.getActiveThreadCount() == 0) {
-                    site.setStatus(StatusEnum.INDEXED);
-                    site.setStatusTime(time.toString());
-                    sitesRepository.save(site);
-                    break;
 
-                } else {
-                    Thread.sleep(1000);
-                }
-            }
-        } catch (InterruptedException ex){
-            ex.printStackTrace();
-        }
-    }*/
 

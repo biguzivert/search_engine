@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 @Service
 public class IndexingServiceImpl implements IndexingService{
@@ -39,7 +41,7 @@ public class IndexingServiceImpl implements IndexingService{
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
-        ArrayList<IndexingMultithread> tasks = new ArrayList<>();
+        ArrayList<IndexingCheck> tasks = new ArrayList<>();
         if(pool.isTerminating()){
             indexingResponse.setError(INDEXING_TERMINATING);
             indexingResponse.setResult(false);
@@ -75,14 +77,20 @@ public class IndexingServiceImpl implements IndexingService{
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, link, sitesRepository, pageRepository);
-                tasks.add(indexingMultithread);
+                IndexingCheck checker = new IndexingCheck(indexingMultithread, newSite, sitesRepository);
+                tasks.add(checker);
+                //tasks.add(indexingMultithread);
                 pool.execute(indexingMultithread);
        //         new IndexingCheck(pool, newSite, sitesRepository).start();
+            }
+            for (IndexingCheck c : tasks){
+                FutureTask<Boolean> checkSiteIndexing = new FutureTask<>(c);
+                pool.execute(checkSiteIndexing);
             }
             //
             indexingResponse.setResult(true);
         }
-        tasks.forEach(t -> pool.execute(new IndexingCheck(t, t.getSite(), sitesRepository)));
+        //tasks.forEach(t -> pool.execute(new IndexingCheck(t, t.getSite(), sitesRepository)));
         return indexingResponse;
     }
 
