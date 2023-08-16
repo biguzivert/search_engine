@@ -78,10 +78,8 @@ public class Lemmatization{
     }
 
     private String clearHtmlTags(String unclearedText){
-        String regex = "<[a-z][/]?>";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(unclearedText);
-        String text = (matcher.find()) ? unclearedText.replaceAll(regex, "") : unclearedText;
+        String regex = "</?.+?>";
+        String text = unclearedText.replaceAll(regex, "");
         return text;
     }
 }
