@@ -1,6 +1,5 @@
 package searchengine.services.indexing;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
@@ -9,14 +8,11 @@ import searchengine.model.enums.StatusEnum;
 import searchengine.services.repositories.PageRepository;
 import searchengine.services.repositories.SitesRepository;
 
-import javax.persistence.NonUniqueResultException;
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
 @Service
@@ -26,6 +22,13 @@ public class IndexingServiceImpl implements IndexingService{
     private final String NOT_INDEXING = "Индексация не запущена";
     private final String INDEXING_STOPPED = "Индексация остановлена пользователем";
     private final String INDEXING_TERMINATING = "Индексация останавливается";
+
+    private final String INDEXING_ONE_PAGE_ERROR_DOESNT_MATCH_LINK_FORM = "Некорректная ссылка";
+    private final String INDEXING_ONE_PAGE_ERROR_SITE_NOT_FOUND = "Данная страница находится за пределами сайтов, указанных в конфигурационном файле";
+
+
+    private final String HTTPS_STRING = "https://";
+    private final String HTTP_STRING = "http://";
     private final SitesList sitesList;
     private volatile ForkJoinPool pool = new ForkJoinPool();
     private SitesRepository sitesRepository;
@@ -81,12 +84,13 @@ public class IndexingServiceImpl implements IndexingService{
                 tasks.add(checker);
                 //tasks.add(indexingMultithread);
                 pool.execute(indexingMultithread);
+                pool.execute(new FutureTask(checker));
        //         new IndexingCheck(pool, newSite, sitesRepository).start();
             }
-            for (IndexingCheck c : tasks){
+/*            for (IndexingCheck c : tasks){
                 FutureTask<Boolean> checkSiteIndexing = new FutureTask<>(c);
                 pool.execute(checkSiteIndexing);
-            }
+            }*/
             //
             indexingResponse.setResult(true);
         }
@@ -135,26 +139,22 @@ public class IndexingServiceImpl implements IndexingService{
             indexingResponse.setError(IS_INDEXING);
             indexingResponse.setResult(false);
             return indexingResponse;
-        } else
-        {
-                List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(url);
-                if(sitesToDelete != null){
-/*                        List<Integer> siteIds = new ArrayList<>();
-                        for(searchengine.model.Site s : sitesToDelete){
-                            siteIds.add(s.getId());
-                        }*/
-                    sitesRepository.deleteAllSitesByUrl(url);
-//                        siteIds.forEach(s -> pageRepository.deleteSiteById(s));
+        } else {
+                int indexOfTransferProtocole = url.indexOf(HTTP_STRING) != 0 ? url.indexOf(HTTP_STRING) : url.indexOf(HTTPS_STRING);
+                if(indexOfTransferProtocole == 0){
+                    indexingResponse.setResult(false);
+                    indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_DOESNT_MATCH_LINK_FORM);
+                    return indexingResponse;
                 }
-                searchengine.model.Site newSite = new searchengine.model.Site();
-                newSite.setName("ИМЯ");
-                newSite.setStatus(StatusEnum.INDEXING);
-                newSite.setUrl(url);
-                newSite.setStatusTime(statusTime);
-                newSite.setLastError("");
-                sitesRepository.save(newSite);
-                String link = newSite.getUrl();
-                pool.execute(new IndexingMultithread(newSite, link, sitesRepository, pageRepository));
+                String cutTransferProtocole = url.substring(indexOfTransferProtocole, url.length());
+                String getSiteLink = cutTransferProtocole.substring(0, cutTransferProtocole.indexOf("/"));
+                if(sitesRepository.findSiteByUrl(getSiteLink) == null){
+                    indexingResponse.setResult(false);
+                    indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_SITE_NOT_FOUND);
+                    return indexingResponse;
+                }
+                searchengine.model.Site siteToIndex = sitesRepository.findSiteByUrl(getSiteLink);
+                pool.execute(new IndexingMultithread(siteToIndex, url, sitesRepository, pageRepository));
             indexingResponse.setResult(true);
         }
         return indexingResponse;

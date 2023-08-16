@@ -118,7 +118,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         boolean matchesLinkForm = false;
         String regex = "http://";
         String secondRegex = "https://";
-        if (path.contains(regex) || path.contains(secondRegex)) {
+        if (path.contains(regex) || path.contains(secondRegex) && path.contains(link)) {
             matchesLinkForm = true;
         }
         return matchesLinkForm;
