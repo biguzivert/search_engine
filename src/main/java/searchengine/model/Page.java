@@ -25,7 +25,7 @@ public class Page {
     private int siteId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "site_id", nullable = true, foreignKey = @ForeignKey(name = "FK_page_site"))
+    @JoinColumn(name = "site_id", nullable = false, foreignKey = @ForeignKey(name = "FK_page_site"))
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Site site;
 

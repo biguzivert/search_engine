@@ -3,6 +3,8 @@ package searchengine.model;
 import com.sun.istack.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 
@@ -19,6 +21,16 @@ public class Index {
 
     @Column(name = "page_id", nullable = false)
     private int pageId;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "page_id", nullable = false, foreignKey = @ForeignKey(name = "FK_index_page"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Page page;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
+    @JoinColumn(name = "lemma_id", nullable = false, foreignKey = @ForeignKey(name = "FK_index_lemma"))
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Lemma lemma;
 
     @Column(name = "lemma_id", nullable = false)
     private int lemmaId;

@@ -8,22 +8,32 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.data.querydsl.QPageRequest;
+import searchengine.model.Lemma;
 import searchengine.model.Page;
+import searchengine.services.repositories.IndexRepository;
+import searchengine.services.repositories.LemmaRepository;
 import searchengine.services.repositories.PageRepository;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Lemmatization{
 
     private PageRepository pageRepository;
-    private Lemmatization(PageRepository pageRepository){
+
+    private LemmaRepository lemmaRepository;
+    private IndexRepository indexRepository;
+    private int siteId;
+
+    private Lemmatization(LemmaRepository lemmaRepository, IndexRepository indexRepository){
+        this.lemmaRepository = lemmaRepository;
+        this.indexRepository = indexRepository;
+    }
+    private Lemmatization(PageRepository pageRepository, int siteId){
         this.pageRepository = pageRepository;
+        this.siteId = siteId;
     }
 
     public void lemmatizationIndexing(String url){
@@ -40,8 +50,23 @@ public class Lemmatization{
             page.setCode(code);
             pageRepository.save(page);
 
-            Map<String, Integer> lemma = lemmas(htmlText);
-
+            Map<String, Integer> lemmas = lemmas(htmlText);
+            Set<String> keys = lemmas.keySet();
+            for(String key : keys){
+                Lemma oldLemma = lemmaRepository.findLemmaByLemma(key);
+                if(oldLemma != null){
+                    int oldFrequency = oldLemma.getFrequency();
+                    int newFrequency = oldFrequency++;
+                    oldLemma.setFrequency(newFrequency);
+                    lemmaRepository.save(oldLemma);
+                    continue;
+                }
+                Lemma lemma = new Lemma();
+                lemma.setLemma(key);
+                lemma.setSiteId(siteId);
+                lemma.setFrequency(1);
+                lemmaRepository.save(lemma);
+            }
 
         } catch(IOException exception){
             exception.printStackTrace();
