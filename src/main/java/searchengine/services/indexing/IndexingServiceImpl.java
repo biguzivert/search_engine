@@ -50,16 +50,16 @@ public class IndexingServiceImpl implements IndexingService{
             indexingResponse.setResult(false);
             return indexingResponse;
         }
-        if(pool.isShutdown() && pool.isTerminated()){
-
-            this.pool = new ForkJoinPool();
-        }
         if(pool.getActiveThreadCount() != 0){
             indexingResponse.setError(IS_INDEXING);
             indexingResponse.setResult(false);
             return indexingResponse;
-        } else
-        {
+        }
+        if(pool.isShutdown() && pool.isTerminated()){
+
+            this.pool = new ForkJoinPool();
+        }
+
             List<Site> sites = sitesList.getSites();
             for(Site site : sites){
                     List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(site.getUrl());
@@ -93,7 +93,6 @@ public class IndexingServiceImpl implements IndexingService{
             }*/
             //
             indexingResponse.setResult(true);
-        }
         //tasks.forEach(t -> pool.execute(new IndexingCheck(t, t.getSite(), sitesRepository)));
         return indexingResponse;
     }
@@ -127,36 +126,44 @@ public class IndexingServiceImpl implements IndexingService{
     }
     public IndexingResponse indexOnePage(String url){
         IndexingResponse indexingResponse = new IndexingResponse();
-        if(pool.isTerminating()){
+        if(pool.isTerminating()) {
             indexingResponse.setError(INDEXING_TERMINATING);
             indexingResponse.setResult(false);
             return indexingResponse;
         }
+        if(pool.getActiveThreadCount() != 0){
+                indexingResponse.setError(IS_INDEXING);
+                indexingResponse.setResult(false);
+                return indexingResponse;
+        }
         if(pool.isShutdown() && pool.isTerminated()){
             this.pool = new ForkJoinPool();
         }
-        if(pool.getActiveThreadCount() != 0){
-            indexingResponse.setError(IS_INDEXING);
-            indexingResponse.setResult(false);
-            return indexingResponse;
-        } else {
+
                 int indexOfTransferProtocole = url.indexOf(HTTP_STRING) != 0 ? url.indexOf(HTTP_STRING) : url.indexOf(HTTPS_STRING);
                 if(indexOfTransferProtocole == 0){
                     indexingResponse.setResult(false);
                     indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_DOESNT_MATCH_LINK_FORM);
                     return indexingResponse;
                 }
-                String cutTransferProtocole = url.substring(indexOfTransferProtocole, url.length());
-                String getSiteLink = cutTransferProtocole.substring(0, cutTransferProtocole.indexOf("/"));
-                if(sitesRepository.findSiteByUrl(getSiteLink) == null){
-                    indexingResponse.setResult(false);
-                    indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_SITE_NOT_FOUND);
-                    return indexingResponse;
+
+                Iterable<searchengine.model.Site> sites = sitesRepository.findAll();
+                searchengine.model.Site siteToIndex = null;
+                boolean ifPageLinkedToSite = false;
+                for(searchengine.model.Site s : sites){
+                    if(url.contains(s.getUrl())){
+                        siteToIndex = s;
+                        ifPageLinkedToSite = true;
+                        break;
+                    }
                 }
-                searchengine.model.Site siteToIndex = sitesRepository.findSiteByUrl(getSiteLink);
+                if(ifPageLinkedToSite == false){
+                 indexingResponse.setResult(false);
+                 indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_SITE_NOT_FOUND);
+                 return indexingResponse;
+                }
                 pool.execute(new IndexingMultithread(siteToIndex, url, sitesRepository, pageRepository));
             indexingResponse.setResult(true);
-        }
         return indexingResponse;
     }
 }
