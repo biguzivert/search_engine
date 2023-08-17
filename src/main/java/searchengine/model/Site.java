@@ -1,6 +1,5 @@
 package searchengine.model;
 
-import com.sun.istack.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import searchengine.model.enums.StatusEnum;

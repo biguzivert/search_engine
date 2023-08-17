@@ -1,14 +1,17 @@
 package searchengine.services.indexing;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.model.enums.StatusEnum;
-import searchengine.services.repositories.PageRepository;
-import searchengine.services.repositories.SitesRepository;
+import searchengine.model.repositories.PageRepository;
+import searchengine.model.repositories.SitesRepository;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,7 @@ public class IndexingServiceImpl implements IndexingService{
     private volatile ForkJoinPool pool = new ForkJoinPool();
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
+    Connection.Response response;
 
     private String statusTime = LocalDateTime.now().toString();
 
@@ -76,7 +80,18 @@ public class IndexingServiceImpl implements IndexingService{
                 newSite.setStatus(StatusEnum.INDEXING);
                 newSite.setUrl(site.getUrl());
                 newSite.setStatusTime(statusTime);
-                newSite.setLastError("");
+
+                String lastError = "";
+                try {
+                    response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
+                    int statusCode = response.statusCode();
+                    if (statusCode != 200) {
+                        lastError = "Ошибка индексации: главная страница сайта недоступна";
+                    }
+                } catch (IOException ex){
+                    ex.printStackTrace();
+                }
+                newSite.setLastError(lastError);
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, link, sitesRepository, pageRepository);

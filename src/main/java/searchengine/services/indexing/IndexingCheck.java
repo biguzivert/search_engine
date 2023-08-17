@@ -1,13 +1,10 @@
 package searchengine.services.indexing;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreType;
-import searchengine.model.Index;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
-import searchengine.services.repositories.SitesRepository;
+import searchengine.model.repositories.SitesRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.concurrent.*;
 
 public class IndexingCheck implements Callable<Boolean> {

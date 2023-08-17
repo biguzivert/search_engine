@@ -8,8 +8,9 @@ import org.jsoup.select.Elements;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
-import searchengine.services.repositories.PageRepository;
-import searchengine.services.repositories.SitesRepository;
+import searchengine.services.lemmatization.Lemmatization;
+import searchengine.model.repositories.PageRepository;
+import searchengine.model.repositories.SitesRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -20,8 +21,6 @@ import java.util.concurrent.RecursiveTask;
 
 public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private Site site;
-//    private Page page;
-    //по идее репозиторий возвращает Optional - уточнить
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
     Connection.Response response;
@@ -41,12 +40,17 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
     }
-    //надо создать класс с конструктором при вызове которого в indexingserviceiml запускается отдельный поток с проверкой именно этого
+    //реализовать лемматизацию каждой страницы
 
     @Override
     protected List<Page> compute(){
         List<Page> subsites = new ArrayList<>();
         List<IndexingMultithread> tasks = new ArrayList<>();
+        Lemmatization lemmatizator = new Lemmatization(site.getId());
+
+        //В случае, если переданная страница уже была проиндексирована, перед её индексацией необходимо удалить всю информацию о ней из таблиц page, lemma и index.
+        //Коды страниц, при получении которых HTTP-ответ был ошибочным (с кодами 4xx или 5xx), индексировать не нужно.
+
 
         try {
             Thread.sleep((long)(500 + Math.random() * 4500));

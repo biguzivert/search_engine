@@ -6,18 +6,16 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.springframework.data.querydsl.QPageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import searchengine.model.Index;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
-import searchengine.services.repositories.IndexRepository;
-import searchengine.services.repositories.LemmaRepository;
-import searchengine.services.repositories.PageRepository;
+import searchengine.model.repositories.IndexRepository;
+import searchengine.model.repositories.LemmaRepository;
+import searchengine.model.repositories.PageRepository;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Lemmatization{
 
@@ -27,14 +25,16 @@ public class Lemmatization{
     private IndexRepository indexRepository;
     private int siteId;
 
-    private Lemmatization(LemmaRepository lemmaRepository, IndexRepository indexRepository){
+    @Autowired
+    public Lemmatization(LemmaRepository lemmaRepository, IndexRepository indexRepository){
         this.lemmaRepository = lemmaRepository;
         this.indexRepository = indexRepository;
     }
-    private Lemmatization(PageRepository pageRepository, int siteId){
-        this.pageRepository = pageRepository;
+    public Lemmatization(int siteId){
         this.siteId = siteId;
     }
+
+    public Lemmatization(){};
 
     public void lemmatizationIndexing(String url){
         try {
@@ -55,8 +55,7 @@ public class Lemmatization{
             for(String key : keys){
                 Lemma oldLemma = lemmaRepository.findLemmaByLemma(key);
                 if(oldLemma != null){
-                    int oldFrequency = oldLemma.getFrequency();
-                    int newFrequency = oldFrequency++;
+                    int newFrequency = oldLemma.getFrequency() + 1;
                     oldLemma.setFrequency(newFrequency);
                     lemmaRepository.save(oldLemma);
                     continue;
@@ -66,6 +65,15 @@ public class Lemmatization{
                 lemma.setSiteId(siteId);
                 lemma.setFrequency(1);
                 lemmaRepository.save(lemma);
+
+                Index index = new Index();
+                index.setPage(page);
+                index.setLemma(lemma);
+                index.setPageId(page.getId());
+                index.setLemmaId(lemma.getId());
+                int rank = lemmas.get(key);
+                index.setRank(rank);
+                indexRepository.save(index);
             }
 
         } catch(IOException exception){
