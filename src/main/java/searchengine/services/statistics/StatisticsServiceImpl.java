@@ -15,9 +15,10 @@ import searchengine.model.repositories.LemmaRepository;
 import searchengine.model.repositories.PageRepository;
 import searchengine.model.repositories.SitesRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private PageRepository pageRepository;
 
     private LemmaRepository lemmaRepository;
+    private SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     @Autowired
     public StatisticsServiceImpl(SitesRepository sitesRepository, PageRepository pageRepository, LemmaRepository lemmaRepository,SitesList sitesList){
@@ -70,8 +72,14 @@ public class StatisticsServiceImpl implements StatisticsService {
             item.setStatus(siteDB.getStatus());
             item.setError(siteDB.getLastError());
             //???
-            long statusTime = Long.getLong(siteDB.getStatusTime());
-            item.setStatusTime(statusTime);
+            try{
+                String statusTimeString = siteDB.getStatusTime();
+                Date statusTimeDateFormat = format.parse(statusTimeString);
+                long statusTime = statusTimeDateFormat.getTime()/1000;
+                item.setStatusTime(statusTime);
+            } catch (ParseException ex){
+                ex.printStackTrace();
+            }
             total.setPages(total.getPages() + pages);
             total.setLemmas(total.getLemmas() + lemmas);
             detailed.add(item);

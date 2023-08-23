@@ -23,12 +23,12 @@ public class Index {
     private int pageId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "page_id", nullable = false, foreignKey = @ForeignKey(name = "FK_index_page"))
+    @JoinColumn(name = "page_id", nullable = false, foreignKey = @ForeignKey(name = "FK_index_page"), insertable = false, updatable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Page page;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinColumn(name = "lemma_id", nullable = false, foreignKey = @ForeignKey(name = "FK_index_lemma"))
+    @JoinColumn(name = "lemma_id", nullable = false, foreignKey = @ForeignKey(name = "FK_index_lemma"), insertable = false, updatable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Lemma lemma;
 

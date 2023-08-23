@@ -17,6 +17,6 @@ public interface IndexRepository extends CrudRepository<Index, Long> {
     List<Page> findPagesByLemmaId(int lemmaId);
 
     @Modifying
-    @Query("SELECT rank FROM Lemma l WHERE l.page_id = :pageId, l.lemma_id = :lemmaId")
+    @Query("SELECT rank FROM Index i WHERE i.pageId = :pageId AND i.lemmaId = :lemmaId")
     float findRankByLemmaIdOnPage(@Param("lemmaId") int lemmaId, @Param("pageId") int pageId);
 }

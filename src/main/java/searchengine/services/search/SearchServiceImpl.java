@@ -34,7 +34,7 @@ public class SearchServiceImpl implements SearchService{
         this.pageRepository = pageRepository;
     }
     @Override
-    public SearchResponse search(String query){
+    public SearchResponse search(String query, String site){
         Lemmatization lemmatizator = new Lemmatization();
         SearchResponse searchResponse = new SearchResponse();
         Map<String, Integer> lemmas = new HashMap<>();
@@ -46,12 +46,10 @@ public class SearchServiceImpl implements SearchService{
 
         //Исключать из полученного списка леммы, которые встречаются на слишком большом количестве страниц. Поэкспериментируйте и определите этот процент самостоятельно.
         Set<String> keys = lemmas.keySet();
-        Iterable<Site> sites = sitesRepository.findAll();
-        int pagesCount = 0;
-        for(Site s : sites){
-            List<Page> pages = pageRepository.findPagesBySiteId(s.getId());
-            pagesCount = pagesCount + pages.size();
-        }
+        Site siteDB = sitesRepository.findSiteByUrl(site);
+        List<Page> pages = pageRepository.findPagesBySiteId(siteDB.getId());
+        int pagesCount = pages.size();
+
         ArrayList<searchengine.config.Lemma> lemmasWithFrequency = new ArrayList<>();
         for(String k : keys){
             Lemma l = lemmaRepository.findLemmaByLemma(k);
@@ -84,10 +82,21 @@ public class SearchServiceImpl implements SearchService{
             Lemma firstLemma = lemmaRepository.findLemmaByLemma(lemmas.get(0).getLemma());
             int firstLemmaId = firstLemma.getId();
             List<Page> pages = indexRepository.findPagesByLemmaId(firstLemmaId);
-            Lemma secondLemma = lemmaRepository.findLemmaByLemma(lemmas.get(1).getLemma());
-            int secondLemmaId = secondLemma.getId();
-            for(Page p : pages){
-                float rank = indexRepository.findRankByLemmaIdOnPage(secondLemmaId, p.getId());
+        if(pages.size() != 0){
+            float rankAbsolute = 0;
+            for(searchengine.config.Lemma l : lemmas){
+                Lemma lemmaToCalcAbsRank = lemmaRepository.findLemmaByLemma(l.getLemma());
+                for(Page p : pages){
+                    rankAbsolute = rankAbsolute + indexRepository.findRankByLemmaIdOnPage(lemmaToCalcAbsRank.getId(), p.getId());
+                }
+            }
+                Lemma secondLemma = lemmaRepository.findLemmaByLemma(lemmas.get(1).getLemma());
+                int secondLemmaId = secondLemma.getId();
+                for(Page p : pages){
+                    float rankFirstLemma = indexRepository.findRankByLemmaIdOnPage(firstLemmaId, p.getId());
+                    float rankSecondLemma = indexRepository.findRankByLemmaIdOnPage(secondLemmaId, p.getId());
+                    float rAbs = rankFirstLemma + rankSecondLemma;
+                }
             }
 
         return relevancy;
