@@ -3,6 +3,7 @@ package searchengine.services.search;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.orm.jpa.LocalEntityManagerFactoryBean;
+import searchengine.config.SearchItem;
 import searchengine.config.SitesList;
 import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
@@ -19,7 +20,7 @@ import java.util.*;
 
 public class SearchServiceImpl implements SearchService{
 
-    private final SitesList sitesList;
+
     private SitesRepository sitesRepository;
     private LemmaRepository lemmaRepository;
     private PageRepository pageRepository;
@@ -27,8 +28,7 @@ public class SearchServiceImpl implements SearchService{
     private IndexRepository indexRepository;
 
     @Autowired
-    public SearchServiceImpl(SitesList sitesList, SitesRepository sitesRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, IndexRepository indexRepository){
-        this.sitesList = sitesList;
+    public SearchServiceImpl(SitesRepository sitesRepository, LemmaRepository lemmaRepository, PageRepository pageRepository, IndexRepository indexRepository){
         this.sitesRepository = sitesRepository;
         this.lemmaRepository = lemmaRepository;
         this.pageRepository = pageRepository;
@@ -67,9 +67,7 @@ public class SearchServiceImpl implements SearchService{
                 lemmasWithFrequency.add(lemmaWithFrequency);
         }
         Collections.sort(lemmasWithFrequency);
-        for(searchengine.config.Lemma l : lemmasWithFrequency){
-
-        }
+        relevancy(lemmasWithFrequency);
 
         return searchResponse;
     }
@@ -83,19 +81,20 @@ public class SearchServiceImpl implements SearchService{
             int firstLemmaId = firstLemma.getId();
             List<Page> pages = indexRepository.findPagesByLemmaId(firstLemmaId);
         if(pages.size() != 0){
-            float rankAbsolute = 0;
-            for(searchengine.config.Lemma l : lemmas){
-                Lemma lemmaToCalcAbsRank = lemmaRepository.findLemmaByLemma(l.getLemma());
-                for(Page p : pages){
-                    rankAbsolute = rankAbsolute + indexRepository.findRankByLemmaIdOnPage(lemmaToCalcAbsRank.getId(), p.getId());
-                }
-            }
                 Lemma secondLemma = lemmaRepository.findLemmaByLemma(lemmas.get(1).getLemma());
                 int secondLemmaId = secondLemma.getId();
+                ArrayList<SearchItem> searchResults = new ArrayList<>();
                 for(Page p : pages){
                     float rankFirstLemma = indexRepository.findRankByLemmaIdOnPage(firstLemmaId, p.getId());
                     float rankSecondLemma = indexRepository.findRankByLemmaIdOnPage(secondLemmaId, p.getId());
                     float rAbs = rankFirstLemma + rankSecondLemma;
+                    SearchItem item = new SearchItem(rAbs);
+                    searchResults.add(item);
+                }
+                Collections.sort(searchResults);
+                for(SearchItem s : searchResults){
+                    float relevance = s.getRAbs()/searchResults.get(0).getRAbs();
+                    s.setRelevance(relevance);
                 }
             }
 
