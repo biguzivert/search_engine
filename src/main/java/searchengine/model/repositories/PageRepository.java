@@ -15,4 +15,6 @@ public interface PageRepository extends CrudRepository<Page, Long> {
 
     List<Page> findPagesBySiteId(int siteId);
 
+    Page findPageById(int pageId);
+
 }

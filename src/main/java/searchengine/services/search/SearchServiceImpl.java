@@ -67,7 +67,7 @@ public class SearchServiceImpl implements SearchService{
                 lemmasWithFrequency.add(lemmaWithFrequency);
         }
         Collections.sort(lemmasWithFrequency);
-        relevancy(lemmasWithFrequency);
+        relevancy(lemmasWithFrequency, query);
 
         return searchResponse;
     }
@@ -75,7 +75,7 @@ public class SearchServiceImpl implements SearchService{
     //По первой, самой редкой лемме из списка, находить все страницы, на которых она встречается. Далее искать соответствия
     // следующей леммы из этого списка страниц, а затем повторять операцию по каждой следующей лемме.
     // Список страниц при этом на каждой итерации должен уменьшаться.
-    private float relevancy(List<searchengine.config.Lemma> lemmas){
+    private float relevancy(List<searchengine.config.Lemma> lemmas, String query){
         float relevancy = 0;
             Lemma firstLemma = lemmaRepository.findLemmaByLemma(lemmas.get(0).getLemma());
             int firstLemmaId = firstLemma.getId();
@@ -89,6 +89,9 @@ public class SearchServiceImpl implements SearchService{
                     float rankSecondLemma = indexRepository.findRankByLemmaIdOnPage(secondLemmaId, p.getId());
                     float rAbs = rankFirstLemma + rankSecondLemma;
                     SearchItem item = new SearchItem(rAbs);
+                    item.setTitle(findTitle(p.getId()));
+                    item.setSnippet(findSnippet(query, firstLemma.getLemma(), secondLemma.getLemma()));
+                    item.setUri(p.getPath());
                     searchResults.add(item);
                 }
                 Collections.sort(searchResults);
@@ -99,5 +102,26 @@ public class SearchServiceImpl implements SearchService{
             }
 
         return relevancy;
+    }
+
+    private String findTitle (int pageId){
+        Page page = pageRepository.findPageById(pageId);
+        String html = page.getContent();
+        int openingTagIndex = html.indexOf("<title>");
+        int closingTagIndex = html.indexOf("</title");
+        String title = html.substring(openingTagIndex, closingTagIndex);
+        return title;
+    }
+    private String findSnippet(String text, String firstLemma, String secondLemma){
+        String snippet = "";
+        int firstIndexOfFirstLemma = text.indexOf(firstLemma);
+        if(firstIndexOfFirstLemma - 20 >= 0){
+            snippet = text.substring(firstIndexOfFirstLemma - 20, firstIndexOfFirstLemma + 28);
+        } else {
+            snippet = text.substring(0, firstIndexOfFirstLemma + 28);
+        }
+        String snippetReplacedFirstLemma = snippet.replaceAll(firstLemma, "<b>" + firstLemma + "</b>");
+        String snippetReplacedAllLemmas = snippetReplacedFirstLemma.replaceAll(secondLemma, "<b>" + secondLemma + "</b>");
+        return snippetReplacedAllLemmas;
     }
 }
