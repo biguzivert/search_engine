@@ -11,13 +11,14 @@ import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
+import searchengine.model.repositories.IndexRepository;
 import searchengine.model.repositories.LemmaRepository;
 import searchengine.model.repositories.PageRepository;
 import searchengine.model.repositories.SitesRepository;
+import searchengine.services.statistics.lemmatization.Lemmatization;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -32,13 +33,15 @@ public class StatisticsServiceImpl implements StatisticsService {
     private PageRepository pageRepository;
 
     private LemmaRepository lemmaRepository;
+    private IndexRepository indexRepository;
     private SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     @Autowired
-    public StatisticsServiceImpl(SitesRepository sitesRepository, PageRepository pageRepository, LemmaRepository lemmaRepository,SitesList sitesList){
+    public StatisticsServiceImpl(SitesRepository sitesRepository, PageRepository pageRepository, LemmaRepository lemmaRepository,SitesList sitesList, IndexRepository indexRepository){
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
         this.lemmaRepository = lemmaRepository;
+        this.indexRepository = indexRepository;
         this.sites = sitesList;
     }
 
@@ -58,11 +61,15 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
         List<Site> sitesList = sites.getSites();
         for(int i = 0; i < sitesList.size(); i++) {
+
             Site site = sitesList.get(i);
             DetailedStatisticsItem item = new DetailedStatisticsItem();
             item.setName(site.getName());
             item.setUrl(site.getUrl());
+
             searchengine.model.Site siteDB = sitesRepository.findSiteByUrl(site.getUrl());
+            Lemmatization lemmatization = new Lemmatization(siteDB, lemmaRepository, indexRepository, pageRepository){};
+            lemmatization.lemmatizationIndexing(site.getUrl());
             List<Page> pagesOnSite = pageRepository.findPagesBySiteId(siteDB.getId());
             int pages = pagesOnSite.size();
             List<Lemma> lemmasOnSite = lemmaRepository.findLemmasBySiteId(siteDB.getId());

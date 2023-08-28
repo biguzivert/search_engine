@@ -8,7 +8,7 @@ import org.jsoup.select.Elements;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
-import searchengine.services.lemmatization.Lemmatization;
+import searchengine.services.statistics.lemmatization.Lemmatization;
 import searchengine.model.repositories.PageRepository;
 import searchengine.model.repositories.SitesRepository;
 

@@ -1,10 +1,7 @@
 package searchengine.services.search;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.orm.jpa.LocalEntityManagerFactoryBean;
 import searchengine.config.SearchItem;
-import searchengine.config.SitesList;
 import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
@@ -13,7 +10,7 @@ import searchengine.model.repositories.IndexRepository;
 import searchengine.model.repositories.LemmaRepository;
 import searchengine.model.repositories.PageRepository;
 import searchengine.model.repositories.SitesRepository;
-import searchengine.services.lemmatization.Lemmatization;
+import searchengine.services.statistics.lemmatization.Lemmatization;
 
 import java.io.IOException;
 import java.util.*;

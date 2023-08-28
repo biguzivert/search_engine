@@ -1,4 +1,4 @@
-package searchengine.services.lemmatization;
+package searchengine.services.statistics.lemmatization;
 
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import searchengine.model.Index;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
+import searchengine.model.Site;
 import searchengine.model.repositories.IndexRepository;
 import searchengine.model.repositories.LemmaRepository;
 import searchengine.model.repositories.PageRepository;
@@ -20,15 +21,16 @@ import java.util.*;
 public class Lemmatization{
 
     private PageRepository pageRepository;
-
     private LemmaRepository lemmaRepository;
     private IndexRepository indexRepository;
     private int siteId;
+    private Site site;
 
-    @Autowired
-    public Lemmatization(LemmaRepository lemmaRepository, IndexRepository indexRepository){
+    //@Autowired
+    public Lemmatization(Site site, LemmaRepository lemmaRepository, IndexRepository indexRepository, PageRepository pageRepository){
         this.lemmaRepository = lemmaRepository;
         this.indexRepository = indexRepository;
+        this.pageRepository = pageRepository;
     }
     public Lemmatization(int siteId){
         this.siteId = siteId;
@@ -48,6 +50,7 @@ public class Lemmatization{
             response = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
             int code = response.statusCode();
             page.setCode(code);
+            page.setSite(site);
             pageRepository.save(page);
 
             Map<String, Integer> lemmas = lemmas(htmlText);
