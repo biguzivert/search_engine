@@ -48,7 +48,6 @@ public class IndexingServiceImpl implements IndexingService{
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
-        ArrayList<IndexingCheck> tasks = new ArrayList<>();
         if(pool.isTerminating()){
             indexingResponse.setError(INDEXING_TERMINATING);
             indexingResponse.setResult(false);
@@ -68,12 +67,12 @@ public class IndexingServiceImpl implements IndexingService{
             for(Site site : sites){
                     List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(site.getUrl());
                     if(sitesToDelete != null){
-/*                        List<Integer> siteIds = new ArrayList<>();
+                        List<Integer> siteIds = new ArrayList<>();
                         for(searchengine.model.Site s : sitesToDelete){
                             siteIds.add(s.getId());
-                        }*/
+                        }
                         sitesRepository.deleteAllSitesByUrl(site.getUrl());
-//                        siteIds.forEach(s -> pageRepository.deleteSiteById(s));
+                        siteIds.forEach(s -> pageRepository.deleteSiteById(s));
                     }
                 searchengine.model.Site newSite = new searchengine.model.Site();
                 newSite.setName(site.getName());
@@ -95,18 +94,12 @@ public class IndexingServiceImpl implements IndexingService{
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, link, sitesRepository, pageRepository);
-                IndexingCheck checker = new IndexingCheck(indexingMultithread, newSite, sitesRepository);
-                tasks.add(checker);
-                //tasks.add(indexingMultithread);
+                List<IndexingMultithread> tasks = sitesList.getSitesTasks();
+                tasks.add(indexingMultithread);
+                sitesList.setSitesTasks(tasks);
                 pool.execute(indexingMultithread);
-                pool.execute(new FutureTask(checker));
-       //         new IndexingCheck(pool, newSite, sitesRepository).start();
             }
-/*            for (IndexingCheck c : tasks){
-                FutureTask<Boolean> checkSiteIndexing = new FutureTask<>(c);
-                pool.execute(checkSiteIndexing);
-            }*/
-            //
+
             indexingResponse.setResult(true);
         //tasks.forEach(t -> pool.execute(new IndexingCheck(t, t.getSite(), sitesRepository)));
         return indexingResponse;

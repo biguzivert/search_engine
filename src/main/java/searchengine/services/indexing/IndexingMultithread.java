@@ -5,6 +5,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import searchengine.config.SitesList;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
@@ -21,6 +23,8 @@ import java.util.concurrent.RecursiveTask;
 
 public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private Site site;
+
+    private SitesList sitesList;
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
     Connection.Response response;
@@ -39,6 +43,11 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         this.link = link;
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
+    }
+
+    @Autowired
+    public IndexingMultithread(SitesList sitesList){
+        this.sitesList = sitesList;
     }
     //реализовать лемматизацию каждой страницы
 
@@ -89,6 +98,10 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                         IndexingMultithread task = new IndexingMultithread(site, path, sitesRepository, pageRepository);
                         task.fork();
                         tasks.add(task);
+                        List<IndexingMultithread> sitesIndexing = sitesList.getSitesTasks();
+                        for(IndexingMultithread t : sitesIndexing){
+                            isIndexed(t);
+                        }
                     });
                 }
                 for (IndexingMultithread task : tasks) {
@@ -130,6 +143,20 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private boolean ifEqualsSiteUrl(String path){
         boolean equalsSiteUrl = path.equals(link);
         return equalsSiteUrl;
+    }
+
+    private void isIndexed(IndexingMultithread task){
+        Site site = task.getSite();
+        if (task.isCompletedNormally()) {
+            site.setStatus(StatusEnum.INDEXED);
+            site.setStatusTime(statusTime.toString());
+            sitesRepository.save(site);
+        } else if (task.isCompletedAbnormally()) {
+            site.setStatus(StatusEnum.FAILED);
+            site.setStatusTime(statusTime.toString());
+            site.setLastError("Индексирование прекращено");
+            sitesRepository.save(site);
+        }
     }
 
     public Site getSite(){

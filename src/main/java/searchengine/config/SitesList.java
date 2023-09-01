@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import searchengine.services.indexing.IndexingMultithread;
 
 import java.util.List;
 
@@ -13,4 +14,6 @@ import java.util.List;
 @ConfigurationProperties(prefix = "indexing-settings")
 public class SitesList {
     private List<Site> sites;
+
+    private List<IndexingMultithread> sitesTasks;
 }
