@@ -17,6 +17,7 @@ import searchengine.model.repositories.PageRepository;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Lemmatization{
 
@@ -28,6 +29,7 @@ public class Lemmatization{
 
     //@Autowired
     public Lemmatization(Site site, LemmaRepository lemmaRepository, IndexRepository indexRepository, PageRepository pageRepository){
+        this.site = site;
         this.lemmaRepository = lemmaRepository;
         this.indexRepository = indexRepository;
         this.pageRepository = pageRepository;
@@ -65,7 +67,7 @@ public class Lemmatization{
                 }
                 Lemma lemma = new Lemma();
                 lemma.setLemma(key);
-                lemma.setSiteId(siteId);
+                lemma.setSite(site);
                 lemma.setFrequency(1);
                 lemmaRepository.save(lemma);
 
@@ -89,7 +91,11 @@ public class Lemmatization{
         String cleared = clearHtmlTags(text);
         String punctuationReplaced = cleared.replaceAll("\\p{P}", "");
         String[] words = punctuationReplaced.split("\\s+");
+        Pattern pattern = Pattern.compile("[а-я]+", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
         for (String word : words) {
+            if(word.length() < 1 || !pattern.matcher(word).matches()){
+                continue;
+            }
             List<String> formInfo = luceneMorph.getMorphInfo(word.toLowerCase());
             boolean notAWord = false;
             for (String f : formInfo) {

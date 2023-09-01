@@ -19,5 +19,7 @@ public interface LemmaRepository extends CrudRepository<Lemma, Long> {
     @Query ("UPDATE Lemma l SET l.frequency = l.frequency + :count WHERE l.lemma = :lemma")
     int increaseFrequency(@Param("lemma") String lemma, @Param("count") int increaseBy);
 
-    List<Lemma> findLemmasBySiteId(int siteId);
+    @Modifying
+    @Query("SELECT lemma FROM Lemma l WHERE l.siteId = :siteId")
+    List<String> findLemmasBySiteId(@Param("siteId") int siteId);
 }

@@ -72,7 +72,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             lemmatization.lemmatizationIndexing(site.getUrl());
             List<Page> pagesOnSite = pageRepository.findPagesBySiteId(siteDB.getId());
             int pages = pagesOnSite.size();
-            List<Lemma> lemmasOnSite = lemmaRepository.findLemmasBySiteId(siteDB.getId());
+            List<String> lemmasOnSite = lemmaRepository.findLemmasBySiteId(siteDB.getId());
             int lemmas = lemmasOnSite.size();
             item.setPages(pages);
             item.setLemmas(lemmas);

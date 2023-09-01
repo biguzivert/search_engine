@@ -46,7 +46,6 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     protected List<Page> compute(){
         List<Page> subsites = new ArrayList<>();
         List<IndexingMultithread> tasks = new ArrayList<>();
-        Lemmatization lemmatizator = new Lemmatization(site.getId());
 
         //В случае, если переданная страница уже была проиндексирована, перед её индексацией необходимо удалить всю информацию о ней из таблиц page, lemma и index.
         //Коды страниц, при получении которых HTTP-ответ был ошибочным (с кодами 4xx или 5xx), индексировать не нужно.
