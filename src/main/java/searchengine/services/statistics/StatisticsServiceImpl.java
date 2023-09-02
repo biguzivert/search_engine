@@ -11,6 +11,7 @@ import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
+import searchengine.model.enums.StatusEnum;
 import searchengine.model.repositories.IndexRepository;
 import searchengine.model.repositories.LemmaRepository;
 import searchengine.model.repositories.PageRepository;
@@ -47,12 +48,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public StatisticsResponse getStatistics() {
-        String[] statuses = { "INDEXED", "FAILED", "INDEXING" };
-        String[] errors = {
-                "Ошибка индексации: главная страница сайта не доступна",
-                "Ошибка индексации: сайт не доступен",
-                ""
-        };
+        StatisticsResponse response = new StatisticsResponse();
+        StatisticsData data = new StatisticsData();
 
         TotalStatistics total = new TotalStatistics();
         total.setSites(sites.getSites().size());
@@ -60,14 +57,34 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
         List<Site> sitesList = sites.getSites();
-        for(int i = 0; i < sitesList.size(); i++) {
 
+        if(sitesRepository.findAll() == null){
+            total.setIndexing(false);
+            total.setLemmas(0);
+            total.setPages(0);
+            total.setSites(0);
+            DetailedStatisticsItem item = new DetailedStatisticsItem();
+            item.setError("");
+            item.setLemmas(0);
+            item.setPages(0);
+            item.setStatus(StatusEnum.INDEXING);
+            item.setName("");
+            item.setUrl("");
+            detailed.add(item);
+            data.setDetailed(detailed);
+            data.setTotal(total);
+            response.setStatistics(data);
+            response.setResult(true);
+            return response;
+        }
+        for(int i = 0; i < sitesList.size(); i++) {
             Site site = sitesList.get(i);
             DetailedStatisticsItem item = new DetailedStatisticsItem();
             item.setName(site.getName());
             item.setUrl(site.getUrl());
 
             searchengine.model.Site siteDB = sitesRepository.findSiteByUrl(site.getUrl());
+
             Lemmatization lemmatization = new Lemmatization(siteDB, lemmaRepository, indexRepository, pageRepository){};
             lemmatization.lemmatizationIndexing(site.getUrl());
             List<Page> pagesOnSite = pageRepository.findPagesBySiteId(siteDB.getId());
@@ -92,8 +109,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             detailed.add(item);
         }
 
-        StatisticsResponse response = new StatisticsResponse();
-        StatisticsData data = new StatisticsData();
+
         data.setTotal(total);
         data.setDetailed(detailed);
         response.setStatistics(data);
