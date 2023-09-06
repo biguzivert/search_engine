@@ -38,8 +38,9 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
 
     private ForkJoinPool pool;
 
-    public IndexingMultithread(Site site, String link, SitesRepository sitesRepository, PageRepository pageRepository) {
+    public IndexingMultithread(Site site, SitesList sitesList, String link, SitesRepository sitesRepository, PageRepository pageRepository) {
         this.site = site;
+        this.sitesList = sitesList;
         this.link = link;
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
@@ -82,7 +83,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                             Document doc = Jsoup.connect(path).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
                             Element allPageCode = doc.select("html").first();
                             String content = allPageCode.outerHtml();
-                            page.setContent(content);
+                            page.setContent("'" + content + "'");
                         } catch (IOException ex){
                             ex.printStackTrace();
                         }
@@ -95,13 +96,13 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                         site.setStatus(StatusEnum.INDEXING);
                         sitesRepository.save(site);
 
-                        IndexingMultithread task = new IndexingMultithread(site, path, sitesRepository, pageRepository);
+                        IndexingMultithread task = new IndexingMultithread(site, sitesList,  path, sitesRepository, pageRepository);
                         task.fork();
                         tasks.add(task);
-                        List<IndexingMultithread> sitesIndexing = sitesList.getSitesTasks();
+/*                        List<IndexingMultithread> sitesIndexing = sitesList.getSitesTasks();
                         for(IndexingMultithread t : sitesIndexing){
                             isIndexed(t);
-                        }
+                        }*/
                     });
                 }
                 for (IndexingMultithread task : tasks) {
@@ -150,11 +151,12 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         if (task.isCompletedNormally()) {
             site.setStatus(StatusEnum.INDEXED);
             site.setStatusTime(statusTime.toString());
+            site.setLastError("");
             sitesRepository.save(site);
         } else if (task.isCompletedAbnormally()) {
             site.setStatus(StatusEnum.FAILED);
             site.setStatusTime(statusTime.toString());
-            site.setLastError("Индексирование прекращено");
+            site.setLastError("Индексирование прекращено пользователем");
             sitesRepository.save(site);
         }
     }

@@ -34,24 +34,24 @@ public class Lemmatization{
         this.indexRepository = indexRepository;
         this.pageRepository = pageRepository;
     }
-    public Lemmatization(int siteId){
+/*    public Lemmatization(int siteId){
         this.siteId = siteId;
-    }
+    }*/
 
     public Lemmatization(){};
 
-    public void lemmatizationIndexing(String url){
+    public void lemmatizationIndexing(){
         try {
-            Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
+            Connection.Response response;
+            response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
+            int responceCode = response.statusCode();
+            Document doc = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
             Element html = doc.select("html").first();
             String htmlText = html.outerHtml();
             Page page = new Page();
             page.setContent(htmlText);
-            page.setPath(url);
-            Connection.Response response;
-            response = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
-            int code = response.statusCode();
-            page.setCode(code);
+            page.setPath(site.getUrl());
+            page.setCode(responceCode);
             page.setSite(site);
             pageRepository.save(page);
 
@@ -68,6 +68,7 @@ public class Lemmatization{
                 Lemma lemma = new Lemma();
                 lemma.setLemma(key);
                 lemma.setSite(site);
+                lemma.setSiteId(site.getId());
                 lemma.setFrequency(1);
                 lemmaRepository.save(lemma);
 

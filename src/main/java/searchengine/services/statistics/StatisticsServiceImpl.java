@@ -86,7 +86,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             searchengine.model.Site siteDB = sitesRepository.findSiteByUrl(site.getUrl());
 
             Lemmatization lemmatization = new Lemmatization(siteDB, lemmaRepository, indexRepository, pageRepository){};
-            lemmatization.lemmatizationIndexing(site.getUrl());
+            lemmatization.lemmatizationIndexing();
             List<Page> pagesOnSite = pageRepository.findPagesBySiteId(siteDB.getId());
             int pages = pagesOnSite.size();
             List<String> lemmasOnSite = lemmaRepository.findLemmasBySiteId(siteDB.getId());

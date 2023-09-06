@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
+import searchengine.model.Index;
 import searchengine.model.enums.StatusEnum;
 import searchengine.model.repositories.PageRepository;
 import searchengine.model.repositories.SitesRepository;
@@ -48,6 +49,7 @@ public class IndexingServiceImpl implements IndexingService{
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
+        List<IndexingMultithread> tasks = new ArrayList<>();
         if(pool.isTerminating()){
             indexingResponse.setError(INDEXING_TERMINATING);
             indexingResponse.setResult(false);
@@ -93,8 +95,11 @@ public class IndexingServiceImpl implements IndexingService{
                 newSite.setLastError(lastError);
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
-                IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, link, sitesRepository, pageRepository);
-                List<IndexingMultithread> tasks = sitesList.getSitesTasks();
+                IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
+                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
+                if(tasksInConfig != null){
+                    tasks.addAll(tasksInConfig);
+                }
                 tasks.add(indexingMultithread);
                 sitesList.setSitesTasks(tasks);
                 pool.execute(indexingMultithread);
@@ -113,21 +118,17 @@ public class IndexingServiceImpl implements IndexingService{
             indexingResponse.setError(NOT_INDEXING);
             indexingResponse.setResult(false);
         } else {
-            pool.shutdownNow();
-            new Thread(() -> {
-                try {
-                    for (;;) {
-                        if (pool.isTerminated()) {
-                            sitesRepository.updateStatusAndError(StatusEnum.INDEXING, StatusEnum.FAILED, INDEXING_STOPPED);
-                            break;
-                        } else {
-                            Thread.sleep(1000);
-                        }
-                    }
-                } catch (InterruptedException ex){
-                    ex.printStackTrace();
+            List<IndexingMultithread> sitesTasks= sitesList.getSitesTasks();
+            for(IndexingMultithread t : sitesTasks){
+                searchengine.model.Site s = t.getSite();
+                if(!t.isDone()){
+                    s.setLastError("Индексация остановлена пользователем");
+                    s.setStatus(StatusEnum.FAILED);
+                    s.setStatusTime(statusTime);
+                    sitesRepository.save(s);
                 }
-            });
+            }
+            pool.shutdownNow();
             indexingResponse.setResult(true);
         }
         return indexingResponse;
@@ -170,7 +171,7 @@ public class IndexingServiceImpl implements IndexingService{
                  indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_SITE_NOT_FOUND);
                  return indexingResponse;
                 }
-                pool.execute(new IndexingMultithread(siteToIndex, url, sitesRepository, pageRepository));
+                pool.execute(new IndexingMultithread(siteToIndex, sitesList,  url, sitesRepository, pageRepository));
             indexingResponse.setResult(true);
         return indexingResponse;
     }
