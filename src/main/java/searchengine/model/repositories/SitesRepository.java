@@ -17,6 +17,7 @@ public interface SitesRepository extends CrudRepository<Site, Long> {
     Site findSiteByUrl(String url);
 
     List<Site> findAllSitesByUrl(String url);
+    List<Site> findAll();
 
     @Modifying
     @Query("update Site s set s.status = :newStatus, s.lastError = :error where s.status = :oldStatus")

@@ -1,6 +1,7 @@
 package searchengine.services.search;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import searchengine.config.SearchItem;
 import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
@@ -15,6 +16,7 @@ import searchengine.services.statistics.lemmatization.Lemmatization;
 import java.io.IOException;
 import java.util.*;
 
+@Service
 public class SearchServiceImpl implements SearchService{
 
 

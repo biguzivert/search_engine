@@ -96,7 +96,7 @@ public class IndexingServiceImpl implements IndexingService{
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
-                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
+/*                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
                 if(tasksInConfig != null){
                     tasks.addAll(tasksInConfig);
                 }

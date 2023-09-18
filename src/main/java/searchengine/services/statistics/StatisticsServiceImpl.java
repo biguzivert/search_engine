@@ -57,8 +57,8 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
         List<Site> sitesList = sites.getSites();
-
-        if(sitesRepository.findAll() == null){
+        List<searchengine.model.Site> sitesInDB = sitesRepository.findAll();
+        if(sitesInDB.isEmpty()){
             total.setIndexing(false);
             total.setLemmas(0);
             total.setPages(0);
@@ -77,6 +77,8 @@ public class StatisticsServiceImpl implements StatisticsService {
             response.setResult(true);
             return response;
         }
+        lemmaRepository.deleteAll();
+        indexRepository.deleteAll();
         for(int i = 0; i < sitesList.size(); i++) {
             Site site = sitesList.get(i);
             DetailedStatisticsItem item = new DetailedStatisticsItem();

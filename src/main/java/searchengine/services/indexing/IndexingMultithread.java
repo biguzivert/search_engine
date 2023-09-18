@@ -106,6 +106,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                     });
                 }
                 for (IndexingMultithread task : tasks) {
+                   // pageRepository.saveAll(task.join());
                     subsites.addAll(task.join());
                 }
             } catch(Exception exception){

@@ -11,7 +11,6 @@ import javax.sql.DataSource;
 
 @Log4j2
 @SpringBootApplication
-@ComponentScan(basePackages = {"searchengine.services.search"})
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
