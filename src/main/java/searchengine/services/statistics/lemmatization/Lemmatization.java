@@ -16,6 +16,7 @@ import searchengine.model.repositories.LemmaRepository;
 import searchengine.model.repositories.PageRepository;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -40,6 +41,7 @@ public class Lemmatization{
 
     public Lemmatization(){};
 
+    //отследить ошибку если сайт есть в списке конфигураций но его еще нет в site потому что не было индексации
     public void lemmatizationIndexing(){
         try {
             Connection.Response response;
@@ -57,9 +59,9 @@ public class Lemmatization{
 
             Map<String, Integer> lemmas = lemmas(htmlText);
             Set<String> keys = lemmas.keySet();
-            for(String key : keys){
+            for (String key : keys) {
                 Lemma oldLemma = lemmaRepository.findLemmaByLemma(key);
-                if(oldLemma != null){
+                if (oldLemma != null) {
                     int newFrequency = oldLemma.getFrequency() + 1;
                     oldLemma.setFrequency(newFrequency);
                     lemmaRepository.save(oldLemma);
@@ -85,7 +87,7 @@ public class Lemmatization{
         } catch(IOException exception){
             exception.printStackTrace();
         }
-          }
+    }
     public Map<String, Integer> lemmas(String text) throws IOException{
         LuceneMorphology luceneMorph = new RussianLuceneMorphology();
         Map<String, Integer> lemmas = new HashMap<>();
@@ -124,5 +126,10 @@ public class Lemmatization{
         String regex = "</?.+?>";
         String text = unclearedText.replaceAll(regex, "");
         return text;
+    }
+
+    private boolean ifKirillic(String text){
+        Pattern pattern = Pattern.compile("[а-я]+", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+        return pattern.matcher(text).find();
     }
 }

@@ -96,7 +96,7 @@ public class IndexingServiceImpl implements IndexingService{
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
-/*                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
+                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
                 if(tasksInConfig != null){
                     tasks.addAll(tasksInConfig);
                 }
@@ -148,13 +148,13 @@ public class IndexingServiceImpl implements IndexingService{
         if(pool.isShutdown() && pool.isTerminated()){
             this.pool = new ForkJoinPool();
         }
-/*
+
                 int indexOfTransferProtocole = url.indexOf(HTTP_STRING) != 0 ? url.indexOf(HTTP_STRING) : url.indexOf(HTTPS_STRING);
                 if(indexOfTransferProtocole == 0){
                     indexingResponse.setResult(false);
                     indexingResponse.setError(INDEXING_ONE_PAGE_ERROR_DOESNT_MATCH_LINK_FORM);
                     return indexingResponse;
-                }*/
+                }
 
                 Iterable<searchengine.model.Site> sites = sitesRepository.findAll();
                 searchengine.model.Site siteToIndex = null;
