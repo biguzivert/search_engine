@@ -1,4 +1,4 @@
-package searchengine.model.repositories;
+package searchengine.repositories;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

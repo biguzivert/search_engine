@@ -9,13 +9,13 @@ import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
-import searchengine.model.Lemma;
 import searchengine.model.Page;
 import searchengine.model.enums.StatusEnum;
-import searchengine.model.repositories.IndexRepository;
-import searchengine.model.repositories.LemmaRepository;
-import searchengine.model.repositories.PageRepository;
-import searchengine.model.repositories.SitesRepository;
+import searchengine.repositories.IndexRepository;
+import searchengine.repositories.LemmaRepository;
+import searchengine.repositories.PageRepository;
+import searchengine.repositories.SitesRepository;
+import searchengine.services.statistics.StatisticsService;
 import searchengine.services.statistics.lemmatization.Lemmatization;
 
 import java.text.ParseException;
@@ -77,8 +77,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             response.setResult(true);
             return response;
         }
-        lemmaRepository.deleteAll();
-        indexRepository.deleteAll();
         for(int i = 0; i < sitesList.size(); i++) {
             Site site = sitesList.get(i);
             DetailedStatisticsItem item = new DetailedStatisticsItem();

@@ -6,17 +6,15 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.springframework.beans.factory.annotation.Autowired;
 import searchengine.model.Index;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
 import searchengine.model.Site;
-import searchengine.model.repositories.IndexRepository;
-import searchengine.model.repositories.LemmaRepository;
-import searchengine.model.repositories.PageRepository;
+import searchengine.repositories.IndexRepository;
+import searchengine.repositories.LemmaRepository;
+import searchengine.repositories.PageRepository;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 

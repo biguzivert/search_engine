@@ -10,14 +10,14 @@ import searchengine.config.SitesList;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
-import searchengine.services.statistics.lemmatization.Lemmatization;
-import searchengine.model.repositories.PageRepository;
-import searchengine.model.repositories.SitesRepository;
+import searchengine.repositories.PageRepository;
+import searchengine.repositories.SitesRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
@@ -72,7 +72,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                     links.forEach(l -> {
                         Page page = new Page();
                         String path = l.attr("abs:href");
-                        if(!ifMatchesLinkForm(path) || ifEqualsSiteUrl(path)){
+                        if(!ifMatchesLinkForm(path) || ifEqualsSiteUrl(path) || !isLinkSupportedType(path)){
                             return;
                         }
                         String cutPathString = cutPath(path);
@@ -115,20 +115,20 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
             exception.printStackTrace();
         }
         site.setStatusTime(statusTime);
-        if(site.getStatus() == StatusEnum.INDEXING && !pool.isShutdown()){
+/*        if(site.getStatus() == StatusEnum.INDEXING && !pool.isShutdown()){
             site.setStatus(StatusEnum.INDEXED);
-        }
+        }*/
         sitesRepository.save(site);
         return subsites;
     }
 
     private boolean isFollowed(String path){
-        boolean ifFollowed = pageRepository.findPageByPath(path) != null;
-        return ifFollowed;
+        Optional<Page> followedPage = pageRepository.findFirstPageByPath(path);
+        return !followedPage.isEmpty();
     }
 
     private String cutPath(String path) {
-        String cutPath = path.substring(link.length() - 1, path.length());
+        String cutPath = path.substring(site.getUrl().length() - 1, path.length());
         return cutPath;
     }
 
@@ -160,6 +160,14 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
             site.setLastError("Индексирование прекращено пользователем");
             sitesRepository.save(site);
         }
+    }
+
+    private boolean isLinkSupportedType(String path){
+        String type = path.substring(path.length()-4, path.length());
+        if(type.matches(".jpg")){
+            return false;
+        }
+        return true;
     }
 
     public Site getSite(){

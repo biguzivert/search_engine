@@ -7,17 +7,18 @@ import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
 import searchengine.model.Page;
 import searchengine.model.Site;
-import searchengine.model.repositories.IndexRepository;
-import searchengine.model.repositories.LemmaRepository;
-import searchengine.model.repositories.PageRepository;
-import searchengine.model.repositories.SitesRepository;
+import searchengine.repositories.IndexRepository;
+import searchengine.repositories.LemmaRepository;
+import searchengine.repositories.PageRepository;
+import searchengine.repositories.SitesRepository;
+import searchengine.services.search.SearchService;
 import searchengine.services.statistics.lemmatization.Lemmatization;
 
 import java.io.IOException;
 import java.util.*;
 
 @Service
-public class SearchServiceImpl implements SearchService{
+public class SearchServiceImpl implements SearchService {
 
 
     private SitesRepository sitesRepository;

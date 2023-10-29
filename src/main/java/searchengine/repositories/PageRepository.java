@@ -1,17 +1,20 @@
-package searchengine.model.repositories;
+package searchengine.repositories;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import searchengine.model.Page;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PageRepository extends CrudRepository<Page, Long> {
 
     void deleteSiteById(int id);
 
-    Page findPageByPath(String path);
+    Optional<Page> findPageByPath(String path);
+
+    Optional<Page> findFirstPageByPath(String path);
 
     List<Page> findPagesBySiteId(int siteId);
 

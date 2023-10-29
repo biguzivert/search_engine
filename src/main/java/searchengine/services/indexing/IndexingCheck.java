@@ -2,7 +2,7 @@ package searchengine.services.indexing;
 
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;
-import searchengine.model.repositories.SitesRepository;
+import searchengine.repositories.SitesRepository;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.*;

@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
-import searchengine.model.Index;
 import searchengine.model.enums.StatusEnum;
-import searchengine.model.repositories.PageRepository;
-import searchengine.model.repositories.SitesRepository;
+import searchengine.repositories.IndexRepository;
+import searchengine.repositories.LemmaRepository;
+import searchengine.repositories.PageRepository;
+import searchengine.repositories.SitesRepository;
+import searchengine.services.indexing.IndexingMultithread;
+import searchengine.services.indexing.IndexingService;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
@@ -17,10 +20,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.FutureTask;
+
 
 @Service
-public class IndexingServiceImpl implements IndexingService{
+public class IndexingServiceImpl implements IndexingService {
 
     private final String IS_INDEXING = "Индексация уже запущена";
     private final String NOT_INDEXING = "Индексация не запущена";
@@ -37,14 +40,18 @@ public class IndexingServiceImpl implements IndexingService{
     private volatile ForkJoinPool pool = new ForkJoinPool();
     private SitesRepository sitesRepository;
     private PageRepository pageRepository;
+    private LemmaRepository lemmaRepository;
+    private IndexRepository indexRepository;
     Connection.Response response;
 
     private String statusTime = LocalDateTime.now().toString();
 
-    public IndexingServiceImpl(SitesList sitesList, SitesRepository sitesRepository, PageRepository pageRepository){
+    public IndexingServiceImpl(SitesList sitesList, SitesRepository sitesRepository, PageRepository pageRepository, LemmaRepository lemmaRepository, IndexRepository indexRepository){
         this.sitesList = sitesList;
         this.sitesRepository = sitesRepository;
         this.pageRepository = pageRepository;
+        this.lemmaRepository = lemmaRepository;
+        this.indexRepository = indexRepository;
     }
 
     public IndexingResponse startIndexing(){
@@ -64,6 +71,9 @@ public class IndexingServiceImpl implements IndexingService{
 
             this.pool = new ForkJoinPool();
         }
+
+        lemmaRepository.deleteAll();
+        indexRepository.deleteAll();
 
             List<Site> sites = sitesList.getSites();
             for(Site site : sites){
