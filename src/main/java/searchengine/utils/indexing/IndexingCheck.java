@@ -1,4 +1,4 @@
-package searchengine.services.indexing;
+package searchengine.utils.indexing;
 
 import searchengine.model.Site;
 import searchengine.model.enums.StatusEnum;

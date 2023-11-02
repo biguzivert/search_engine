@@ -1,4 +1,4 @@
-package searchengine.services.statistics.lemmatization;
+package searchengine.utils.lemmatization;
 
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;

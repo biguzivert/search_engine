@@ -1,8 +1,8 @@
-package searchengine.services.indexing;
+package searchengine.utils.indexing;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
@@ -11,8 +11,8 @@ import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SitesRepository;
-import searchengine.services.indexing.IndexingMultithread;
 import searchengine.services.indexing.IndexingService;
+import searchengine.utils.indexing.IndexingMultithread;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 
-@Service
+@Component
 public class IndexingServiceImpl implements IndexingService {
 
     private final String IS_INDEXING = "Индексация уже запущена";

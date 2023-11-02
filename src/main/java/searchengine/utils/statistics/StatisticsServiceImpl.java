@@ -1,8 +1,8 @@
-package searchengine.services.statistics;
+package searchengine.utils.statistics;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.statistics.DetailedStatisticsItem;
@@ -16,13 +16,13 @@ import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SitesRepository;
 import searchengine.services.statistics.StatisticsService;
-import searchengine.services.statistics.lemmatization.Lemmatization;
+import searchengine.utils.lemmatization.Lemmatization;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
 

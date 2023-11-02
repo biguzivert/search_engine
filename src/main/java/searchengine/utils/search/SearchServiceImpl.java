@@ -1,7 +1,7 @@
-package searchengine.services.search;
+package searchengine.utils.search;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import searchengine.config.SearchItem;
 import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
@@ -12,12 +12,12 @@ import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SitesRepository;
 import searchengine.services.search.SearchService;
-import searchengine.services.statistics.lemmatization.Lemmatization;
+import searchengine.utils.lemmatization.Lemmatization;
 
 import java.io.IOException;
 import java.util.*;
 
-@Service
+@Component
 public class SearchServiceImpl implements SearchService {
 
 
