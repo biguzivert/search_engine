@@ -13,7 +13,7 @@ import java.util.List;
 @Repository
 public interface LemmaRepository extends CrudRepository<Lemma, Long> {
 
-    Lemma findLemmaByLemma(String lemma);
+    Lemma findFirstLemmaByLemma(String lemma);
 
     @Modifying
     @Query ("UPDATE Lemma l SET l.frequency = l.frequency + :count WHERE l.lemma = :lemma")

@@ -52,7 +52,7 @@ public class SearchServiceImpl implements SearchService {
 
         ArrayList<searchengine.config.Lemma> lemmasWithFrequency = new ArrayList<>();
         for(String k : keys){
-            Lemma l = lemmaRepository.findLemmaByLemma(k);
+            Lemma l = lemmaRepository.findFirstLemmaByLemma(k);
             if(l == null){
                 continue;
             }
@@ -77,11 +77,11 @@ public class SearchServiceImpl implements SearchService {
     // Список страниц при этом на каждой итерации должен уменьшаться.
     private float relevancy(List<searchengine.config.Lemma> lemmas, String query){
         float relevancy = 0;
-            Lemma firstLemma = lemmaRepository.findLemmaByLemma(lemmas.get(0).getLemma());
+            Lemma firstLemma = lemmaRepository.findFirstLemmaByLemma(lemmas.get(0).getLemma());
             int firstLemmaId = firstLemma.getId();
             List<Page> pages = indexRepository.findPagesByLemmaId(firstLemmaId);
         if(pages.size() != 0){
-                Lemma secondLemma = lemmaRepository.findLemmaByLemma(lemmas.get(1).getLemma());
+                Lemma secondLemma = lemmaRepository.findFirstLemmaByLemma(lemmas.get(1).getLemma());
                 int secondLemmaId = secondLemma.getId();
                 ArrayList<SearchItem> searchResults = new ArrayList<>();
                 for(Page p : pages){

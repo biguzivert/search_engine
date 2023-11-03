@@ -28,8 +28,8 @@ public class IndexingServiceImpl implements IndexingService {
     private final String IS_INDEXING = "Индексация уже запущена";
     private final String NOT_INDEXING = "Индексация не запущена";
     private final String INDEXING_STOPPED = "Индексация остановлена пользователем";
+    private final String INDEXING_CANNOT_BE_STARTED = "Индексация не может быть запущена сейчас";
     private final String INDEXING_TERMINATING = "Индексация останавливается";
-
     private final String INDEXING_ONE_PAGE_ERROR_DOESNT_MATCH_LINK_FORM = "Некорректная ссылка";
     private final String INDEXING_ONE_PAGE_ERROR_SITE_NOT_FOUND = "Данная страница находится за пределами сайтов, указанных в конфигурационном файле";
 
@@ -42,6 +42,8 @@ public class IndexingServiceImpl implements IndexingService {
     private PageRepository pageRepository;
     private LemmaRepository lemmaRepository;
     private IndexRepository indexRepository;
+
+    public static boolean ifStopped = false;
     Connection.Response response;
 
     private String statusTime = LocalDateTime.now().toString();
@@ -57,41 +59,27 @@ public class IndexingServiceImpl implements IndexingService {
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
         List<IndexingMultithread> tasks = new ArrayList<>();
-        if(pool.isTerminating()){
-            indexingResponse.setError(INDEXING_TERMINATING);
+        if(!ifPoolIsAllowedToStartIndexing()){
+            indexingResponse.setError(INDEXING_CANNOT_BE_STARTED);
             indexingResponse.setResult(false);
             return indexingResponse;
         }
-        if(pool.getActiveThreadCount() != 0){
-            indexingResponse.setError(IS_INDEXING);
-            indexingResponse.setResult(false);
-            return indexingResponse;
-        }
-        if(pool.isShutdown() && pool.isTerminated()){
+/*        if(pool.isShutdown() && pool.isTerminated()){
 
             this.pool = new ForkJoinPool();
-        }
-
+        }*/
         lemmaRepository.deleteAll();
         indexRepository.deleteAll();
 
             List<Site> sites = sitesList.getSites();
-            for(Site site : sites){
-                    List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(site.getUrl());
-                    if(sitesToDelete != null){
-                        List<Integer> siteIds = new ArrayList<>();
-                        for(searchengine.model.Site s : sitesToDelete){
-                            siteIds.add(s.getId());
-                        }
-                        sitesRepository.deleteAllSitesByUrl(site.getUrl());
-                        siteIds.forEach(s -> pageRepository.deleteSiteById(s));
-                    }
+        for(Site site : sites){
+                clearDataBase(site);
+
                 searchengine.model.Site newSite = new searchengine.model.Site();
                 newSite.setName(site.getName());
                 newSite.setStatus(StatusEnum.INDEXING);
                 newSite.setUrl(site.getUrl());
                 newSite.setStatusTime(statusTime);
-
                 String lastError = "";
                 try {
                     response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
@@ -106,12 +94,12 @@ public class IndexingServiceImpl implements IndexingService {
                 sitesRepository.save(newSite);
                 String link = newSite.getUrl();
                 IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
-                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
+/*                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
                 if(tasksInConfig != null){
                     tasks.addAll(tasksInConfig);
                 }
                 tasks.add(indexingMultithread);
-                sitesList.setSitesTasks(tasks);
+                sitesList.setSitesTasks(tasks);*/
                 pool.execute(indexingMultithread);
             }
 
@@ -120,7 +108,37 @@ public class IndexingServiceImpl implements IndexingService {
         return indexingResponse;
     }
 
-    @Override
+    @Transactional
+    public IndexingResponse stopIndexing(){
+        IndexingResponse indexingResponse = new IndexingResponse();
+        ifStopped = true;
+        indexingResponse.setResult(true);
+        return indexingResponse;
+    }
+
+    private boolean ifPoolIsAllowedToStartIndexing(){
+        boolean isAllowed = true;
+        if(this.pool.isTerminating() || this.pool.getActiveThreadCount() != 0){
+            isAllowed = false;
+        }
+        return isAllowed;
+    }
+
+    private void clearDataBase(Site site){
+        List<searchengine.model.Site> sitesToDelete = sitesRepository.findAllSitesByUrl(site.getUrl());
+        if(sitesToDelete == null){
+            return;
+        }
+        for(searchengine.model.Site s : sitesToDelete){
+            int siteId = s.getId();
+            sitesRepository.deleteAllSitesById(siteId);
+            pageRepository.deletePagesBySiteId(siteId);
+        }
+    }
+
+
+    //старая версия метода остановки индексации
+/*    @Override
     @Transactional
     public IndexingResponse stopIndexing() {
         IndexingResponse indexingResponse = new IndexingResponse();
@@ -142,7 +160,7 @@ public class IndexingServiceImpl implements IndexingService {
             indexingResponse.setResult(true);
         }
         return indexingResponse;
-    }
+    }*/
     public IndexingResponse indexOnePage(String url){
         IndexingResponse indexingResponse = new IndexingResponse();
         if(pool.isTerminating()) {

@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
+import static searchengine.utils.indexing.IndexingServiceImpl.ifStopped;
+
 public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private Site site;
 
@@ -38,6 +40,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
 
     private ForkJoinPool pool;
 
+    private volatile StatusEnum status;
     public IndexingMultithread(Site site, SitesList sitesList, String link, SitesRepository sitesRepository, PageRepository pageRepository) {
         this.site = site;
         this.sitesList = sitesList;
@@ -93,12 +96,20 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                         page.setSiteId(site.getId());
                         pageRepository.save(page);
                         site.setStatusTime(statusTime);
-                        site.setStatus(StatusEnum.INDEXING);
                         sitesRepository.save(site);
 
-                        IndexingMultithread task = new IndexingMultithread(site, sitesList,  path, sitesRepository, pageRepository);
-                        task.fork();
-                        tasks.add(task);
+                        if(ifStopped){
+                            status = StatusEnum.FAILED;
+                            site.setStatus(status);
+                            site.setStatusTime(statusTime);
+                            sitesRepository.save(site);
+                        }
+
+                        if(!ifStopped) {
+                            IndexingMultithread task = new IndexingMultithread(site, sitesList, path, sitesRepository, pageRepository);
+                            task.fork();
+                            tasks.add(task);
+                        }
 /*                        List<IndexingMultithread> sitesIndexing = sitesList.getSitesTasks();
                         for(IndexingMultithread t : sitesIndexing){
                             isIndexed(t);

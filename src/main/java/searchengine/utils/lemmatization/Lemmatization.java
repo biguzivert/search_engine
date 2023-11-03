@@ -58,7 +58,7 @@ public class Lemmatization{
             Map<String, Integer> lemmas = lemmas(htmlText);
             Set<String> keys = lemmas.keySet();
             for (String key : keys) {
-                Lemma oldLemma = lemmaRepository.findLemmaByLemma(key);
+                Lemma oldLemma = lemmaRepository.findFirstLemmaByLemma(key);
                 if (oldLemma != null) {
                     int newFrequency = oldLemma.getFrequency() + 1;
                     oldLemma.setFrequency(newFrequency);
