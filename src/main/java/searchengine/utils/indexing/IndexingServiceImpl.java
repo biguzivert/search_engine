@@ -58,53 +58,30 @@ public class IndexingServiceImpl implements IndexingService {
 
     public IndexingResponse startIndexing(){
         IndexingResponse indexingResponse = new IndexingResponse();
-        List<IndexingMultithread> tasks = new ArrayList<>();
         if(!ifPoolIsAllowedToStartIndexing()){
             indexingResponse.setError(INDEXING_CANNOT_BE_STARTED);
             indexingResponse.setResult(false);
             return indexingResponse;
         }
-/*        if(pool.isShutdown() && pool.isTerminated()){
-
-            this.pool = new ForkJoinPool();
-        }*/
         lemmaRepository.deleteAll();
         indexRepository.deleteAll();
 
-            List<Site> sites = sitesList.getSites();
+        List<Site> sites = sitesList.getSites();
         for(Site site : sites){
-                clearDataBase(site);
-
-                searchengine.model.Site newSite = new searchengine.model.Site();
-                newSite.setName(site.getName());
-                newSite.setStatus(StatusEnum.INDEXING);
-                newSite.setUrl(site.getUrl());
-                newSite.setStatusTime(statusTime);
-                String lastError = "";
-                try {
-                    response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
-                    int statusCode = response.statusCode();
-                    if (statusCode != 200) {
-                        lastError = "Ошибка индексации: главная страница сайта недоступна";
-                    }
-                } catch (IOException ex){
-                    ex.printStackTrace();
-                }
+            clearDataBase(site);
+            searchengine.model.Site newSite = new searchengine.model.Site(site.getName(), StatusEnum.INDEXING, site.getUrl(), statusTime);
+            try {
+                String lastError = getCode(site) != 200 ? "Ошибка индексации: главная страница сайта недоступна" : "";
                 newSite.setLastError(lastError);
-                sitesRepository.save(newSite);
-                String link = newSite.getUrl();
-                IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
-/*                List<IndexingMultithread> tasksInConfig = sitesList.getSitesTasks();
-                if(tasksInConfig != null){
-                    tasks.addAll(tasksInConfig);
-                }
-                tasks.add(indexingMultithread);
-                sitesList.setSitesTasks(tasks);*/
-                pool.execute(indexingMultithread);
+            } catch (IOException ex){
+                ex.printStackTrace();
             }
-
-            indexingResponse.setResult(true);
-        //tasks.forEach(t -> pool.execute(new IndexingCheck(t, t.getSite(), sitesRepository)));
+            sitesRepository.save(newSite);
+            String link = newSite.getUrl();
+            IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
+            pool.execute(indexingMultithread);
+        }
+        indexingResponse.setResult(true);
         return indexingResponse;
     }
 
@@ -134,6 +111,12 @@ public class IndexingServiceImpl implements IndexingService {
             sitesRepository.deleteAllSitesById(siteId);
             pageRepository.deletePagesBySiteId(siteId);
         }
+    }
+
+    private int getCode (Site site) throws IOException{
+        response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
+        int statusCode = response.statusCode();
+        return statusCode;
     }
 
 

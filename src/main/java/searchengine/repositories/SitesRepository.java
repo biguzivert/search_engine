@@ -29,5 +29,7 @@ public interface SitesRepository extends CrudRepository<Site, Long> {
     void deleteAllSitesByUrl(@Param("url") String url);
 
     @org.springframework.transaction.annotation.Transactional
+    @Modifying
+    @Query("delete from Site s where s.id = :id")
     void deleteAllSitesById(int id);
 }

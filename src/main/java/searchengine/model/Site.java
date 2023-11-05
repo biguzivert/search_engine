@@ -38,4 +38,15 @@ public class Site {
 
     @OneToMany(mappedBy = "site", fetch = FetchType.EAGER)
     private Set<Page> pages = new HashSet<>();
+
+    public Site(String name, StatusEnum status, String url, String statusTime){
+        this.name = name;
+        this.status = status;
+        this.url = url;
+        this.statusTime = statusTime;
+    }
+
+    public Site(){
+
+    }
 }
