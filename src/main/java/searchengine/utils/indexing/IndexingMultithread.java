@@ -71,8 +71,11 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                         return;
                     }
                     try {
-                        //если код не 200 надо делать return
-                        Page page = new Page(getContent(path), getStatusCode(path), cutPathString, site, site.getId());
+                        int statusCode = getStatusCode(path);
+                        if(statusCode != 200){
+                            return;
+                        }
+                        Page page = new Page(getContent(path), statusCode, cutPathString, site, site.getId());
                         pageRepository.save(page);
                     } catch (IOException ex){
                         ex.printStackTrace();
@@ -81,26 +84,23 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                     sitesRepository.save(site);
                     if(ifStopped){
                         status = StatusEnum.FAILED;
+                        site.setLastError("Индексация остановлена пользователем");
                         site.setStatus(status);
                         site.setStatusTime(statusTime);
                         sitesRepository.save(site);
-                    }
-                    if(!ifStopped) {
+                    } else {
                         IndexingMultithread task = new IndexingMultithread(site, sitesList, path, sitesRepository, pageRepository);
                         task.fork();
                         tasks.add(task);
                     }
                 });
-                }
+            }
                 for (IndexingMultithread task : tasks) {
                     subsites.addAll(task.join());
                 }
             } catch(IOException | InterruptedException exception){
             exception.printStackTrace();
         }
-        site.setStatusTime(statusTime);
-
-        sitesRepository.save(site);
         return subsites;
     }
 
