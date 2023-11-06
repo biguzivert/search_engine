@@ -35,7 +35,7 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
 
     private String statusTime = LocalDateTime.now().toString();
 
-    private int statusCode;
+//    private int statusCode;
     private String lastError;
 
     private ForkJoinPool pool;
@@ -59,76 +59,47 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     protected List<Page> compute(){
         List<Page> subsites = new ArrayList<>();
         List<IndexingMultithread> tasks = new ArrayList<>();
-
-        //В случае, если переданная страница уже была проиндексирована, перед её индексацией необходимо удалить всю информацию о ней из таблиц page, lemma и index.
-        //Коды страниц, при получении которых HTTP-ответ был ошибочным (с кодами 4xx или 5xx), индексировать не нужно.
-
-
         try {
             Thread.sleep((long)(500 + Math.random() * 4500));
-                 response = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
-                 statusCode = response.statusCode();
-
-                Document document = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
-                Elements links = document.select("a");
-                if (!links.isEmpty()) {
-                    links.forEach(l -> {
-                        Page page = new Page();
-                        String path = l.attr("abs:href");
-                        if(!ifMatchesLinkForm(path) || ifEqualsSiteUrl(path) || !isLinkSupportedType(path)){
-                            return;
-                        }
-                        String cutPathString = cutPath(path);
-                        if(isFollowed(cutPathString)){
-                            return;
-                        }
-                        try {
-                            Document doc = Jsoup.connect(path).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
-                            Element allPageCode = doc.select("html").first();
-                            String content = allPageCode.outerHtml();
-                            page.setContent("'" + content + "'");
-                        } catch (IOException ex){
-                            ex.printStackTrace();
-                        }
-                        page.setCode(statusCode);
-                        page.setPath(cutPathString);
-                        page.setSite(site);
-                        page.setSiteId(site.getId());
+            Document document = Jsoup.connect(link).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
+            Elements links = document.select("a");
+            if (!links.isEmpty()) {
+                links.forEach(l -> {
+                    String path = l.attr("abs:href");
+                    String cutPathString = getCutPathIfUnfollowed(path);
+                    if(cutPathString == null){
+                        return;
+                    }
+                    try {
+                        //если код не 200 надо делать return
+                        Page page = new Page(getContent(path), getStatusCode(path), cutPathString, site, site.getId());
                         pageRepository.save(page);
+                    } catch (IOException ex){
+                        ex.printStackTrace();
+                    }
+                    site.setStatusTime(statusTime);
+                    sitesRepository.save(site);
+                    if(ifStopped){
+                        status = StatusEnum.FAILED;
+                        site.setStatus(status);
                         site.setStatusTime(statusTime);
                         sitesRepository.save(site);
-
-                        if(ifStopped){
-                            status = StatusEnum.FAILED;
-                            site.setStatus(status);
-                            site.setStatusTime(statusTime);
-                            sitesRepository.save(site);
-                        }
-
-                        if(!ifStopped) {
-                            IndexingMultithread task = new IndexingMultithread(site, sitesList, path, sitesRepository, pageRepository);
-                            task.fork();
-                            tasks.add(task);
-                        }
-/*                        List<IndexingMultithread> sitesIndexing = sitesList.getSitesTasks();
-                        for(IndexingMultithread t : sitesIndexing){
-                            isIndexed(t);
-                        }*/
-                    });
+                    }
+                    if(!ifStopped) {
+                        IndexingMultithread task = new IndexingMultithread(site, sitesList, path, sitesRepository, pageRepository);
+                        task.fork();
+                        tasks.add(task);
+                    }
+                });
                 }
                 for (IndexingMultithread task : tasks) {
-                   // pageRepository.saveAll(task.join());
                     subsites.addAll(task.join());
                 }
-            } catch(Exception exception){
-
-            //ПЕРЕДЕЛАТЬ, ВСТАВЛЯТЬ В last_error ошибку только если индексирование сайта ПРЕРВАНО
+            } catch(IOException | InterruptedException exception){
             exception.printStackTrace();
         }
         site.setStatusTime(statusTime);
-/*        if(site.getStatus() == StatusEnum.INDEXING && !pool.isShutdown()){
-            site.setStatus(StatusEnum.INDEXED);
-        }*/
+
         sitesRepository.save(site);
         return subsites;
     }
@@ -136,6 +107,29 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     private boolean isFollowed(String path){
         Optional<Page> followedPage = pageRepository.findFirstPageByPath(path);
         return !followedPage.isEmpty();
+    }
+
+    private int getStatusCode(String path) throws IOException{
+        response = Jsoup.connect(path).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
+        int statusCode = response.statusCode();
+        return statusCode;
+    }
+
+    private String getContent(String path) throws IOException{
+        Document doc = Jsoup.connect(path).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
+        Element allPageCode = doc.select("html").first();
+        String content = allPageCode.outerHtml();
+        return content;
+    }
+    private String getCutPathIfUnfollowed(String path){
+        String cutPath = null;
+        if(!(!ifMatchesLinkForm(path) || ifEqualsSiteUrl(path) || !isLinkSupportedType(path))){
+            cutPath = cutPath(path);
+            if(!isFollowed(cutPath)){
+                return cutPath;
+            }
+        }
+        return null;
     }
 
     private String cutPath(String path) {

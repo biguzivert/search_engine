@@ -38,4 +38,14 @@ public class Page {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
+    public Page(){}
+
+    public Page(String content, int code, String path, Site site, int siteId){
+        this.content = content;
+        this.code = code;
+        this.path = path;
+        this.site = site;
+        this.siteId = siteId;
+    }
+
 }
