@@ -48,4 +48,11 @@ public class Page {
         this.siteId = siteId;
     }
 
+    public Page(String content, int code, String path, Site site){
+        this.content = content;
+        this.code = code;
+        this.path = path;
+        this.site = site;
+    }
+
 }

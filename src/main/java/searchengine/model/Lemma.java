@@ -33,4 +33,13 @@ public class Lemma {
 
     @NotNull
     private int frequency;
+
+    public Lemma(String lemma, Site site, int siteId, int frequency){
+        this.lemma = lemma;
+        this.site = site;
+        this.siteId = siteId;
+        this.frequency = frequency;
+    }
+
+    public Lemma(){}
 }

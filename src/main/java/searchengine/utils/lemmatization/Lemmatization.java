@@ -40,19 +40,16 @@ public class Lemmatization{
     public Lemmatization(){};
 
     //отследить ошибку если сайт есть в списке конфигураций но его еще нет в site потому что не было индексации
+    //getresponce
     public void lemmatizationIndexing(){
         try {
             Connection.Response response;
             response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
-            int responceCode = response.statusCode();
+            int responseCode = response.statusCode();
             Document doc = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").get();
             Element html = doc.select("html").first();
             String htmlText = html.outerHtml();
-            Page page = new Page();
-            page.setContent(htmlText);
-            page.setPath(site.getUrl());
-            page.setCode(responceCode);
-            page.setSite(site);
+            Page page = new Page(htmlText, responseCode, site.getUrl(), site);
             pageRepository.save(page);
 
             Map<String, Integer> lemmas = lemmas(htmlText);
@@ -65,20 +62,11 @@ public class Lemmatization{
                     lemmaRepository.save(oldLemma);
                     continue;
                 }
-                Lemma lemma = new Lemma();
-                lemma.setLemma(key);
-                lemma.setSite(site);
-                lemma.setSiteId(site.getId());
-                lemma.setFrequency(1);
+                Lemma lemma = new Lemma(key, site, site.getId(), 1);
                 lemmaRepository.save(lemma);
 
-                Index index = new Index();
-                index.setPage(page);
-                index.setLemma(lemma);
-                index.setPageId(page.getId());
-                index.setLemmaId(lemma.getId());
                 int rank = lemmas.get(key);
-                index.setRank(rank);
+                Index index = new Index(page, lemma, page.getId(), lemma.getId(), rank);
                 indexRepository.save(index);
             }
 

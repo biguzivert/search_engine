@@ -37,4 +37,14 @@ public class Index {
 
     @Column(name = "`rank`", nullable = false)
     private float rank;
+
+    public Index(){}
+
+    public Index(Page page, Lemma lemma, int pageId, int lemmaId, float rank){
+        this.page = page;
+        this.lemma = lemma;
+        this.pageId = pageId;
+        this.lemmaId = lemmaId;
+        this.rank = rank;
+    }
 }
