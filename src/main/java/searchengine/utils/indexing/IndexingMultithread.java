@@ -65,6 +65,9 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
             Elements links = document.select("a");
             if (!links.isEmpty()) {
                 links.forEach(l -> {
+                    if(status == StatusEnum.FAILED){
+                        return;
+                    }
                     String path = l.attr("abs:href");
                     String cutPathString = getCutPathIfUnfollowed(path);
                     if(cutPathString == null){
@@ -75,8 +78,8 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                         if(statusCode != 200){
                             return;
                         }
-                        Page page = new Page(getContent(path), statusCode, cutPathString, site, site.getId());
-                        pageRepository.save(page);
+/*                        Page page = new Page(getContent(path), statusCode, cutPathString, site, site.getId());
+                        pageRepository.save(page);*/
                     } catch (IOException ex){
                         ex.printStackTrace();
                     }
@@ -96,18 +99,25 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
                 });
             }
                 for (IndexingMultithread task : tasks) {
+                    //попробовать subsites сделать Set, чтобы не было повторяющихся сайтов, убрать метод ifFollowed
+                    // и добавлять страницы в бд единоразовым запросом, и возвращать Set методом compute!
                     subsites.addAll(task.join());
                 }
             } catch(IOException | InterruptedException exception){
             exception.printStackTrace();
         }
+/*        if(status == StatusEnum.INDEXING){
+            site.setStatus(StatusEnum.INDEXED);
+            site.setStatusTime(statusTime);
+            sitesRepository.save(site);
+        }*/
         return subsites;
     }
 
-    private boolean isFollowed(String path){
+/*    private boolean isFollowed(String path){
         Optional<Page> followedPage = pageRepository.findFirstPageByPath(path);
         return !followedPage.isEmpty();
-    }
+    }*/
 
     private int getStatusCode(String path) throws IOException{
         response = Jsoup.connect(path).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
@@ -123,17 +133,21 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
     }
     private String getCutPathIfUnfollowed(String path){
         String cutPath = null;
-        if(!(!ifMatchesLinkForm(path) || ifEqualsSiteUrl(path) || !isLinkSupportedType(path))){
+        if(ifMatchesLinkForm(path) || !ifEqualsSiteUrl(path) || isLinkSupportedType(path)){
             cutPath = cutPath(path);
-            if(!isFollowed(cutPath)){
-                return cutPath;
-            }
+            return cutPath;
         }
         return null;
     }
 
-    private String cutPath(String path) {
-        String cutPath = path.substring(site.getUrl().length() - 1, path.length());
+    private String cutPath(String path){
+        String cutPath = "";
+        try {
+            cutPath = path.substring(site.getUrl().length() - 1, path.length());
+
+        } catch (StringIndexOutOfBoundsException ex){
+            ex.printStackTrace();
+        }
         return cutPath;
     }
 
@@ -141,14 +155,14 @@ public class IndexingMultithread extends RecursiveTask<List<Page>>{
         boolean matchesLinkForm = false;
         String regex = "http://";
         String secondRegex = "https://";
-        if (path.contains(regex) || path.contains(secondRegex) && path.contains(link)) {
+        if ((path.contains(regex) || path.contains(secondRegex)) && path.contains(site.getUrl())) {
             matchesLinkForm = true;
         }
         return matchesLinkForm;
     }
 
     private boolean ifEqualsSiteUrl(String path){
-        boolean equalsSiteUrl = path.equals(link);
+        boolean equalsSiteUrl = path.equals(site.getUrl());
         return equalsSiteUrl;
     }
 

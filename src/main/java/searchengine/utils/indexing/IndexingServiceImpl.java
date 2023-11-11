@@ -1,11 +1,13 @@
 package searchengine.utils.indexing;
 
+import org.aspectj.weaver.ast.Call;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
+import searchengine.model.Page;
 import searchengine.model.enums.StatusEnum;
 import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
@@ -14,12 +16,15 @@ import searchengine.repositories.SitesRepository;
 import searchengine.services.indexing.IndexingService;
 import searchengine.utils.indexing.IndexingMultithread;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
+import java.util.Set;
+import java.util.concurrent.*;
 
 
 @Component
@@ -57,6 +62,8 @@ public class IndexingServiceImpl implements IndexingService {
     }
 
     public IndexingResponse startIndexing(){
+        List<Site> sites = sitesList.getSites();
+        ExecutorService mainService = Executors.newFixedThreadPool(sites.size());
         IndexingResponse indexingResponse = new IndexingResponse();
         if(!ifPoolIsAllowedToStartIndexing()){
             indexingResponse.setError(INDEXING_CANNOT_BE_STARTED);
@@ -66,20 +73,8 @@ public class IndexingServiceImpl implements IndexingService {
         lemmaRepository.deleteAll();
         indexRepository.deleteAll();
 
-        List<Site> sites = sitesList.getSites();
         for(Site site : sites){
-            clearDataBase(site);
-            searchengine.model.Site newSite = new searchengine.model.Site(site.getName(), StatusEnum.INDEXING, site.getUrl(), statusTime);
-            try {
-                String lastError = getCode(site) != 200 ? "Ошибка индексации: главная страница сайта недоступна" : "";
-                newSite.setLastError(lastError);
-            } catch (IOException ex){
-                ex.printStackTrace();
-            }
-            sitesRepository.save(newSite);
-            String link = newSite.getUrl();
-            IndexingMultithread indexingMultithread = new IndexingMultithread(newSite, sitesList,  link, sitesRepository, pageRepository);
-            pool.execute(indexingMultithread);
+            mainService.execute(new SiteIndexing(site, sitesRepository, pageRepository, sitesList));
         }
         indexingResponse.setResult(true);
         return indexingResponse;
@@ -113,12 +108,12 @@ public class IndexingServiceImpl implements IndexingService {
         }
     }
 
-    private int getCode (Site site) throws IOException{
-        response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
+    //сделать этот метод public static и использовать во всех классах
+    public static int getCode (Site site) throws IOException{
+        Connection.Response response = Jsoup.connect(site.getUrl()).userAgent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36").execute();
         int statusCode = response.statusCode();
         return statusCode;
     }
-
 
     //старая версия метода остановки индексации
 /*    @Override
@@ -144,6 +139,8 @@ public class IndexingServiceImpl implements IndexingService {
         }
         return indexingResponse;
     }*/
+
+    //indexOnePage переписать чтобы не индексировались дочерние страницы а только одна переданная
     public IndexingResponse indexOnePage(String url){
         IndexingResponse indexingResponse = new IndexingResponse();
         if(pool.isTerminating()) {
